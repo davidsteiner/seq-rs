@@ -1,0 +1,15 @@
+
+program = _{ SOI ~ "\n"* ~ "@startuml" ~ "\n"+ ~ (stmt ~ "\n"+)* ~ "@enduml" ~ "\n"* ~ EOI }
+
+stmt = {
+      participant
+    | message
+}
+
+participant = { "participant" ~ ident }
+message = { ident ~ "->" ~ ident }
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
+
+
+WHITESPACE = _{ " " | "\t" }

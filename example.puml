@@ -1,0 +1,6 @@
+@startuml
+participant Actor1
+participant Actor2
+
+Actor1 -> Actor2
+@enduml
