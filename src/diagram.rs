@@ -43,8 +43,19 @@ impl SequenceDiagram {
         }
     }
 
-    fn find_participant(&self, id: &str) -> Option<&Participant> {
-        self.participants.iter().find(|p| p.name.as_str() == id)
+    pub fn get_participants(&self) -> &Vec<Participant> {
+        &self.participants
+    }
+
+    pub fn get_timeline(&self) -> &Vec<Vec<Event>> {
+        &self.timeline
+    }
+
+    pub fn find_participant(&self, id: &str) -> Option<(usize, &Participant)> {
+        self.participants
+            .iter()
+            .enumerate()
+            .find(|(_idx, p)| p.name.as_str() == id)
     }
 
     pub fn add_participant(&mut self, participant: Participant) {
@@ -53,10 +64,6 @@ impl SequenceDiagram {
             self.timeline[0].push(ParticipantCreated(participant.name.clone()));
             self.participants.push(participant)
         }
-    }
-
-    pub fn get_participants(&self) -> &Vec<Participant> {
-        &self.participants
     }
 
     pub fn add_message(&mut self, message: Message) {

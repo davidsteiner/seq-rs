@@ -5,6 +5,7 @@ authors = ["David Steiner <david_j_steiner@yahoo.co.nz>"]
 edition = "2018"
 
 [dependencies]
+nalgebra = "0.20"
 pest = "2.1"
 pest_derive = "2.1"
 svg = "0.7"
