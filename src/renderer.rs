@@ -28,11 +28,11 @@ impl GridSize {
     }
 
     fn height(&self) -> u32 {
-        self.row_bounds.last().unwrap().clone()
+        *self.row_bounds.last().unwrap()
     }
 }
 
-pub fn render(diagram: &SequenceDiagram) {
+pub fn render(diagram: &SequenceDiagram) -> String {
     let width = (PARTICIPANT_WIDTH + PARTICIPANT_SPACE) * diagram.get_participants().len() as u32;
     let grid_size = calculate_grid(diagram);
     let height = grid_size.height();
@@ -69,7 +69,7 @@ pub fn render(diagram: &SequenceDiagram) {
             }
         }
     }
-    renderer.save();
+    renderer.as_string()
 }
 
 fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
@@ -102,6 +102,7 @@ impl SVGRenderer {
         let marker = Marker::new()
             .set("id", ARROW_HEAD_ID)
             .set("markerWidth", 10)
+            .set("markerHeight", 10)
             .set("refX", 9)
             .set("refY", 3)
             .set("orient", "auto")
@@ -110,15 +111,13 @@ impl SVGRenderer {
         SVGRenderer {
             doc: Document::new()
                 .set("viewBox", (0, 0, width, height))
-                .set("width", width)
-                .set("height", height)
                 .add(Definitions::new().add(marker)),
             participant_width: PARTICIPANT_WIDTH,
         }
     }
 
-    pub fn save(&self) {
-        svg::save("diagram.svg", &self.doc).unwrap();
+    pub fn as_string(&self) -> String {
+        self.doc.to_string()
     }
 
     fn add<T>(&mut self, node: T)
