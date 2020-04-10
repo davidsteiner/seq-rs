@@ -1,4 +1,4 @@
-use crate::diagram::{Event, Participant, SequenceDiagram};
+use crate::diagram::{Event, Participant, SequenceDiagram, LineStyle};
 
 use nalgebra::Point2;
 use svg::node::element::{Definitions, Line, Marker, Path, Rectangle, Text};
@@ -63,8 +63,12 @@ pub fn render(diagram: &SequenceDiagram) -> String {
                     let (dest_idx, _) = diagram.find_participant(&msg.to).unwrap();
                     let src_x = grid_size.get_col_center(src_idx);
                     let dest_x = grid_size.get_col_center(dest_idx);
+                    let dash = match &msg.style {
+                        LineStyle::Plain => 0,
+                        LineStyle::Dashed => 10,
+                    };
 
-                    renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), 0);
+                    renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
                 }
             }
         }

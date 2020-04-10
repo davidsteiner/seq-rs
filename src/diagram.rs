@@ -23,6 +23,13 @@ impl Participant {
 pub struct Message {
     pub from: ID,
     pub to: ID,
+    pub style: LineStyle,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum LineStyle {
+    Plain,
+    Dashed,
 }
 
 pub enum Event {

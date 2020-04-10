@@ -6,8 +6,9 @@ stmt = {
     | message
 }
 
+arrow = { "->" | "-->" | "<--" | "<-" }
 participant = { "participant" ~ ident }
-message = { ident ~ "->" ~ ident }
+message = { ident ~ arrow ~ ident }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
 

@@ -13,5 +13,6 @@ pub fn parse(content: &str) -> Result<String, pest::error::Error<parser::Rule>> 
 
 #[test]
 fn example_puml() {
-    parse("example.puml");
+    let unparsed_file = std::fs::read_to_string("example.puml").expect("cannot read puml file");
+    parse(&unparsed_file).expect("failed to parse diagram");
 }

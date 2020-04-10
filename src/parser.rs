@@ -1,4 +1,4 @@
-use crate::diagram::{Message, Participant, SequenceDiagram};
+use crate::diagram::{LineStyle, Message, Participant, SequenceDiagram};
 
 use pest::error::Error;
 use pest::Parser;
@@ -50,11 +50,28 @@ fn build_ast_from_stmt(pair: pest::iterators::Pair<Rule>) -> AstNode {
         }
         Rule::message => {
             let mut pair = pair.into_inner();
-            let from = pair.next().unwrap();
-            let to = pair.next().unwrap();
+            let left_participant = pair.next().unwrap();
+            let arrow = pair.next().unwrap();
+            let right_participant = pair.next().unwrap();
+            let line_style = match arrow.as_str() {
+                "<-" | "->" => LineStyle::Plain,
+                "<--" | "-->" => LineStyle::Dashed,
+                _ => panic!("unexpected arrow type received")
+            };
+            let from;
+            let to;
+            if arrow.as_str().starts_with('<') {
+                from = right_participant.as_str();
+                to = left_participant.as_str();
+            } else {
+                from = left_participant.as_str();
+                to = right_participant.as_str();
+            };
+
             AstNode::Message(Message {
-                from: String::from(from.as_str()),
-                to: String::from(to.as_str()),
+                from: String::from(from),
+                to: String::from(to),
+                style: line_style,
             })
         }
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
