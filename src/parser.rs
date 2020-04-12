@@ -49,9 +49,7 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
             let name = pair.next().unwrap();
             AstNode::Participant(Participant::new(String::from(name.as_str())))
         }
-        Rule::message => {
-            AstNode::Message(build_message(pair))
-        }
+        Rule::message => AstNode::Message(build_message(pair)),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     }
 }
@@ -64,7 +62,7 @@ fn build_message(pair: Pair<Rule>) -> Message {
     let line_style = match arrow.as_str() {
         "<-" | "->" => LineStyle::Plain,
         "<--" | "-->" => LineStyle::Dashed,
-        _ => panic!("unexpected arrow type received")
+        _ => panic!("unexpected arrow type received"),
     };
     let from;
     let to;
@@ -77,7 +75,7 @@ fn build_message(pair: Pair<Rule>) -> Message {
     };
     let label = match pair.next() {
         Some(l) => l.into_inner().next().unwrap().as_str(),
-        None => ""
+        None => "",
     };
 
     Message {

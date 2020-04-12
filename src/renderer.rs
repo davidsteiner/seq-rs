@@ -1,4 +1,4 @@
-use crate::diagram::{Event, Participant, SequenceDiagram, LineStyle};
+use crate::diagram::{Event, LineStyle, Participant, SequenceDiagram};
 
 use nalgebra::Point2;
 use svg::node::element::{Definitions, Line, Marker, Path, Rectangle, Text};
@@ -10,6 +10,9 @@ const PARTICIPANT_HEIGHT: u32 = 100;
 const PARTICIPANT_SPACE: u32 = 150;
 
 static ARROW_HEAD_ID: &str = "arrow";
+
+static LIGHT_BLUE: &str = "#add3ff";
+static MEDIUM_BLUE: &str = "#62acff";
 
 struct GridSize {
     col_bounds: Vec<u32>,
@@ -49,7 +52,9 @@ pub fn render(diagram: &SequenceDiagram) -> String {
                     renderer.render_line(
                         Point2::new(center_x, grid_size.row_bounds[idx]),
                         Point2::new(center_x, height - PARTICIPANT_HEIGHT),
-                        15,
+                        3,
+                        0,
+                        MEDIUM_BLUE,
                         None,
                     );
 
@@ -70,9 +75,13 @@ pub fn render(diagram: &SequenceDiagram) -> String {
 
                     renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
 
-                    let text_bounds = if src_x < dest_x { (src_x, dest_x) } else { (dest_x, src_x) };
+                    let text_bounds = if src_x < dest_x {
+                        (src_x, dest_x)
+                    } else {
+                        (dest_x, src_x)
+                    };
                     let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
-                    renderer.render_text(&msg.label, text_x, y - 5, 25);
+                    renderer.render_text(&msg.label, text_x, y - 5, 35);
                 }
             }
         }
@@ -106,19 +115,20 @@ struct SVGRenderer {
 
 impl SVGRenderer {
     pub fn new(width: u32, height: u32) -> SVGRenderer {
-        let path = Path::new().set("d", "M0,0 L0,6 L9,3 z");
+        let path = Path::new().set("d", "M0,0 L0,12 L18,6 z");
         let marker = Marker::new()
             .set("id", ARROW_HEAD_ID)
-            .set("markerWidth", 10)
-            .set("markerHeight", 10)
-            .set("refX", 9)
-            .set("refY", 3)
+            .set("markerWidth", 20)
+            .set("markerHeight", 20)
+            .set("markerUnits", "userSpaceOnUse")
+            .set("refX", 18)
+            .set("refY", 6)
             .set("orient", "auto")
             .add(path);
 
         SVGRenderer {
             doc: Document::new()
-                .set("viewBox", (0, 0, width, height))
+                .set("viewBox", (-5, -5, width + 10, height + 10))
                 .add(Definitions::new().add(marker)),
             participant_width: PARTICIPANT_WIDTH,
         }
@@ -141,15 +151,25 @@ impl SVGRenderer {
             y,
             self.participant_width,
             PARTICIPANT_HEIGHT,
+            20,
         );
-        self.render_text(&participant.get_label(), x, y + PARTICIPANT_HEIGHT / 3 * 2, 50);
+        self.render_text(
+            &participant.get_label(),
+            x,
+            y + PARTICIPANT_HEIGHT / 3 * 2,
+            50,
+        );
     }
 
-    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32) {
+    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, r: u32) {
         let rect = Rectangle::new()
             .set("x", x)
             .set("y", y)
-            .set("fill", "grey")
+            .set("rx", r)
+            .set("ry", r)
+            .set("fill", LIGHT_BLUE)
+            .set("stroke", MEDIUM_BLUE)
+            .set("stroke-width", 5)
             .set("width", width)
             .set("height", height);
         self.add(rect);
@@ -166,14 +186,16 @@ impl SVGRenderer {
     }
 
     fn render_arrow(&mut self, p1: Point2<u32>, p2: Point2<u32>, dash: u8) {
-        self.render_line(p1, p2, dash, Some(ARROW_HEAD_ID));
+        self.render_line(p1, p2, 1, dash, "black", Some(ARROW_HEAD_ID));
     }
 
     fn render_line(
         &mut self,
         p1: Point2<u32>,
         p2: Point2<u32>,
+        width: u8,
         dash: u8,
+        stroke_colour: &str,
         marker_end: Option<&str>,
     ) {
         let mut line = Line::new()
@@ -181,8 +203,8 @@ impl SVGRenderer {
             .set("y1", p1.y)
             .set("x2", p2.x)
             .set("y2", p2.y)
-            .set("stroke", "black")
-            .set("stroke-width", 5)
+            .set("stroke", stroke_colour)
+            .set("stroke-width", width)
             .set("stroke-dasharray", dash);
         if let Some(m) = marker_end {
             line = line.set("marker-end", format!("url(#{})", m));
