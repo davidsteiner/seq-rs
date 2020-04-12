@@ -1,6 +1,7 @@
 use crate::diagram::{LineStyle, Message, Participant, SequenceDiagram};
 
 use pest::error::Error;
+use pest::iterators::Pair;
 use pest::Parser;
 
 #[derive(Parser)]
@@ -41,7 +42,7 @@ fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
     Ok(ast)
 }
 
-fn build_ast_from_stmt(pair: pest::iterators::Pair<Rule>) -> AstNode {
+fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::participant => {
             let mut pair = pair.into_inner();
@@ -49,31 +50,40 @@ fn build_ast_from_stmt(pair: pest::iterators::Pair<Rule>) -> AstNode {
             AstNode::Participant(Participant::new(String::from(name.as_str())))
         }
         Rule::message => {
-            let mut pair = pair.into_inner();
-            let left_participant = pair.next().unwrap();
-            let arrow = pair.next().unwrap();
-            let right_participant = pair.next().unwrap();
-            let line_style = match arrow.as_str() {
-                "<-" | "->" => LineStyle::Plain,
-                "<--" | "-->" => LineStyle::Dashed,
-                _ => panic!("unexpected arrow type received")
-            };
-            let from;
-            let to;
-            if arrow.as_str().starts_with('<') {
-                from = right_participant.as_str();
-                to = left_participant.as_str();
-            } else {
-                from = left_participant.as_str();
-                to = right_participant.as_str();
-            };
-
-            AstNode::Message(Message {
-                from: String::from(from),
-                to: String::from(to),
-                style: line_style,
-            })
+            AstNode::Message(build_message(pair))
         }
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
+    }
+}
+
+fn build_message(pair: Pair<Rule>) -> Message {
+    let mut pair = pair.into_inner();
+    let left_participant = pair.next().unwrap();
+    let arrow = pair.next().unwrap();
+    let right_participant = pair.next().unwrap();
+    let line_style = match arrow.as_str() {
+        "<-" | "->" => LineStyle::Plain,
+        "<--" | "-->" => LineStyle::Dashed,
+        _ => panic!("unexpected arrow type received")
+    };
+    let from;
+    let to;
+    if arrow.as_str().starts_with('<') {
+        from = right_participant.as_str();
+        to = left_participant.as_str();
+    } else {
+        from = left_participant.as_str();
+        to = right_participant.as_str();
+    };
+    let label = match pair.next() {
+        Some(l) => l.into_inner().next().unwrap().as_str(),
+        None => ""
+    };
+
+    Message {
+        from: String::from(from),
+        to: String::from(to),
+        label: String::from(label),
+        style: line_style,
     }
 }

@@ -1,8 +1,5 @@
 @startuml
-participant Actor1
-participant Actor2
-
-Actor3 -> Actor1
-Actor1 -> Actor2
-Actor2 -> Actor1
+participant a
+a -> b : xxx
+c <-- a: zzz
 @enduml

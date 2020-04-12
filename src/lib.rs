@@ -1,6 +1,5 @@
 extern crate pest;
-#[macro_use]
-extern crate pest_derive;
+#[macro_use] extern crate pest_derive;
 
 mod diagram;
 mod parser;
@@ -14,5 +13,5 @@ pub fn parse(content: &str) -> Result<String, pest::error::Error<parser::Rule>> 
 #[test]
 fn example_puml() {
     let unparsed_file = std::fs::read_to_string("example.puml").expect("cannot read puml file");
-    parse(&unparsed_file).expect("failed to parse diagram");
+    println!("{}", parse(&unparsed_file).expect("Parsing puml failed"));
 }

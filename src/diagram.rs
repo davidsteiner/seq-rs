@@ -23,6 +23,7 @@ impl Participant {
 pub struct Message {
     pub from: ID,
     pub to: ID,
+    pub label: String,
     pub style: LineStyle,
 }
 

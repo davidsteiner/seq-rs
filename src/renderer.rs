@@ -69,6 +69,10 @@ pub fn render(diagram: &SequenceDiagram) -> String {
                     };
 
                     renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
+
+                    let text_bounds = if src_x < dest_x { (src_x, dest_x) } else { (dest_x, src_x) };
+                    let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
+                    renderer.render_text(&msg.label, text_x, y - 5, 25);
                 }
             }
         }
@@ -138,7 +142,7 @@ impl SVGRenderer {
             self.participant_width,
             PARTICIPANT_HEIGHT,
         );
-        self.render_text(&participant.get_label(), x, y + PARTICIPANT_HEIGHT / 3 * 2);
+        self.render_text(&participant.get_label(), x, y + PARTICIPANT_HEIGHT / 3 * 2, 50);
     }
 
     fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32) {
@@ -151,11 +155,11 @@ impl SVGRenderer {
         self.add(rect);
     }
 
-    fn render_text(&mut self, text: &str, x: u32, y: u32) {
+    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8) {
         let text = Text::new()
             .set("x", x)
             .set("y", y)
-            .set("font-size", 50)
+            .set("font-size", font_size)
             .set("text-anchor", "middle")
             .add(TextNode::new(text));
         self.add(text);

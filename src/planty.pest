@@ -8,9 +8,11 @@ stmt = {
 
 arrow = { "->" | "-->" | "<--" | "<-" }
 participant = { "participant" ~ ident }
-message = { ident ~ arrow ~ ident }
+
+label = { (!"\n" ~ ANY)* }
+message_label = { ":" ~ label }
+message = { ident ~ arrow ~ ident ~ message_label? }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
 
 
 WHITESPACE = _{ " " | "\t" }
