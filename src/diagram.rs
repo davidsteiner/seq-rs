@@ -14,6 +14,10 @@ impl Participant {
         Participant { name, label }
     }
 
+    pub fn with_label(name: String, label: String) -> Participant {
+        Participant { name, label }
+    }
+
     pub fn get_label(&self) -> &String {
         &self.label
     }

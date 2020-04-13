@@ -6,13 +6,17 @@ stmt = {
     | message
 }
 
-arrow = { "->" | "-->" | "<--" | "<-" }
-participant = { "participant" ~ ident }
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 
+participant = { "participant" ~ ( ident | string ) ~ participant_alias? }
+participant_alias = { "as" ~ ident }
+
+arrow = { "->" | "-->" | "<--" | "<-" }
 label = { (!"\n" ~ ANY)* }
 message_label = { ":" ~ label }
 message = { ident ~ arrow ~ ident ~ message_label? }
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
 
 
 WHITESPACE = _{ " " | "\t" }

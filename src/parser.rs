@@ -44,17 +44,37 @@ fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
 
 fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
-        Rule::participant => {
-            let mut pair = pair.into_inner();
-            let name = pair.next().unwrap();
-            AstNode::Participant(Participant::new(String::from(name.as_str())))
-        }
-        Rule::message => AstNode::Message(build_message(pair)),
+        Rule::participant => AstNode::Participant(parse_participant(pair)),
+        Rule::message => AstNode::Message(parse_message(pair)),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     }
 }
 
-fn build_message(pair: Pair<Rule>) -> Message {
+fn parse_participant(pair: Pair<Rule>) -> Participant {
+    let mut pair = pair.into_inner();
+    let label_pair = pair.next().unwrap();
+    let label = match label_pair.as_rule() {
+        Rule::ident => label_pair.as_str(),
+        Rule::string => {
+            // Strip the leading and trailing "
+            let str = &label_pair.as_str();
+            &str[1..str.len() - 1]
+        }
+        unknown_expr => panic!(
+            "Unexpected expression in participant label: {:?}",
+            unknown_expr
+        ),
+    };
+
+    let name = match pair.next() {
+        Some(inner) => inner.into_inner().next().unwrap().as_str(),
+        None => label,
+    };
+
+    Participant::with_label(String::from(name), String::from(label))
+}
+
+fn parse_message(pair: Pair<Rule>) -> Message {
     let mut pair = pair.into_inner();
     let left_participant = pair.next().unwrap();
     let arrow = pair.next().unwrap();
