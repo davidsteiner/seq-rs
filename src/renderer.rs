@@ -1,4 +1,4 @@
-use crate::diagram::{Event, LineStyle, Participant, SequenceDiagram};
+use crate::diagram::{Event, LineStyle, Message, Participant, SequenceDiagram};
 
 use nalgebra::Point2;
 use svg::node::element::{Definitions, Line, Marker, Path, Rectangle, Text};
@@ -63,30 +63,95 @@ pub fn render(diagram: &SequenceDiagram) -> String {
                     renderer.render_participant(participant, center_x, height - PARTICIPANT_HEIGHT);
                 }
                 Event::MessageSent(msg) => {
-                    let y = grid_size.get_row_center(idx);
-                    let (src_idx, _) = diagram.find_participant(&msg.from).unwrap();
-                    let (dest_idx, _) = diagram.find_participant(&msg.to).unwrap();
-                    let src_x = grid_size.get_col_center(src_idx);
-                    let dest_x = grid_size.get_col_center(dest_idx);
-                    let dash = match &msg.style {
-                        LineStyle::Plain => 0,
-                        LineStyle::Dashed => 10,
-                    };
-
-                    renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
-
-                    let text_bounds = if src_x < dest_x {
-                        (src_x, dest_x)
-                    } else {
-                        (dest_x, src_x)
-                    };
-                    let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
-                    renderer.render_text(&msg.label, text_x, y - 5, 35);
+                    render_message(&mut renderer, msg, idx, diagram, &grid_size);
                 }
             }
         }
     }
     renderer.as_string()
+}
+
+fn render_message(
+    renderer: &mut SVGRenderer,
+    msg: &Message,
+    row: usize,
+    diagram: &SequenceDiagram,
+    grid_size: &GridSize,
+) {
+    if msg.from == msg.to {
+        render_self_message(renderer, msg, row, diagram, grid_size);
+    } else {
+        render_regular_message(renderer, msg, row, diagram, grid_size);
+    }
+}
+
+fn render_regular_message(
+    renderer: &mut SVGRenderer,
+    msg: &Message,
+    row: usize,
+    diagram: &SequenceDiagram,
+    grid_size: &GridSize,
+) {
+    let y = grid_size.get_row_center(row);
+
+    let (src_idx, _) = diagram.find_participant(&msg.from).unwrap();
+    let (dest_idx, _) = diagram.find_participant(&msg.to).unwrap();
+    let src_x = grid_size.get_col_center(src_idx);
+    let dest_x = grid_size.get_col_center(dest_idx);
+    let dash = match &msg.style {
+        LineStyle::Plain => 0,
+        LineStyle::Dashed => 10,
+    };
+
+    renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
+
+    let text_bounds = if src_x < dest_x {
+        (src_x, dest_x)
+    } else {
+        (dest_x, src_x)
+    };
+    let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
+    renderer.render_text(&msg.label, text_x, y - 5, 35, "middle");
+}
+
+fn render_self_message(
+    renderer: &mut SVGRenderer,
+    msg: &Message,
+    row: usize,
+    diagram: &SequenceDiagram,
+    grid_size: &GridSize,
+) {
+    let y = grid_size.get_row_center(row);
+    let y_start = y - 20;
+    let y_end = y + 20;
+    let (idx, _) = diagram.find_participant(&msg.from).unwrap();
+    let x = grid_size.get_col_center(idx);
+    let x_offset = x + 35;
+
+    let dash = match &msg.style {
+        LineStyle::Plain => 0,
+        LineStyle::Dashed => 10,
+    };
+
+    renderer.render_line(
+        Point2::new(x, y_start),
+        Point2::new(x_offset, y_start),
+        1,
+        dash,
+        "black",
+        None,
+    );
+    renderer.render_line(
+        Point2::new(x_offset, y_start),
+        Point2::new(x_offset, y_end),
+        1,
+        dash,
+        "black",
+        None,
+    );
+    renderer.render_arrow(Point2::new(x_offset, y_end), Point2::new(x, y_end), dash);
+
+    renderer.render_text(&msg.label, x_offset + 10, y + 10, 35, "start");
 }
 
 fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
@@ -158,6 +223,7 @@ impl SVGRenderer {
             x,
             y + PARTICIPANT_HEIGHT / 3 * 2,
             50,
+            "middle",
         );
     }
 
@@ -175,12 +241,12 @@ impl SVGRenderer {
         self.add(rect);
     }
 
-    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8) {
+    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str) {
         let text = Text::new()
             .set("x", x)
             .set("y", y)
             .set("font-size", font_size)
-            .set("text-anchor", "middle")
+            .set("text-anchor", text_anchor)
             .add(TextNode::new(text));
         self.add(text);
     }
