@@ -6,21 +6,32 @@ type ID = String;
 pub struct Participant {
     name: ID,
     label: String,
+    kind: ParticipantKind,
 }
 
 impl Participant {
-    pub fn new(name: String) -> Participant {
+    pub fn new(name: String, kind: ParticipantKind) -> Participant {
         let label = name.clone();
-        Participant { name, label }
+        Participant::with_label(name, kind, label)
     }
 
-    pub fn with_label(name: String, label: String) -> Participant {
-        Participant { name, label }
+    pub fn with_label(name: String, kind: ParticipantKind, label: String) -> Participant {
+        Participant { name, label, kind }
     }
 
     pub fn get_label(&self) -> &String {
         &self.label
     }
+
+    pub fn get_kind(&self) -> &ParticipantKind {
+        &self.kind
+    }
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ParticipantKind {
+    Default,
+    Actor,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -79,8 +90,14 @@ impl SequenceDiagram {
     }
 
     pub fn add_message(&mut self, message: Message) {
-        self.add_participant(Participant::new(message.from.clone()));
-        self.add_participant(Participant::new(message.to.clone()));
+        self.add_participant(Participant::new(
+            message.from.clone(),
+            ParticipantKind::Default,
+        ));
+        self.add_participant(Participant::new(
+            message.to.clone(),
+            ParticipantKind::Default,
+        ));
         self.timeline.push(vec![MessageSent(message)]);
     }
 }

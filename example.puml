@@ -1,5 +1,8 @@
 @startuml
-participant a
-a -> b : xxx
-c <-- a: zzz
+actor "Participant 1" as p1
+participant "Participant 2" as p2
+participant p3
+p1 -> p2
+p1 -> p3
+p2 -> p4
 @enduml

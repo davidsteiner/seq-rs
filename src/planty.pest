@@ -9,7 +9,8 @@ stmt = {
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 
-participant = { "participant" ~ ( ident | string ) ~ participant_alias? }
+participant = { participant_type ~ ( ident | string ) ~ participant_alias? }
+participant_type = { "participant" | "actor" }
 participant_alias = { "as" ~ ident }
 
 arrow = { "->" | "-->" | "<--" | "<-" }

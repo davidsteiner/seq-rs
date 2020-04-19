@@ -1,43 +1,21 @@
-use crate::diagram::{Event, LineStyle, Message, Participant, SequenceDiagram};
+use crate::diagram::{Event, LineStyle, Message, Participant, ParticipantKind, SequenceDiagram};
+use crate::layout::{
+    calculate_grid, Draw, GridSize, ACTOR_HEIGHT, PARTICIPANT_HEIGHT, PARTICIPANT_WIDTH,
+};
 
 use nalgebra::Point2;
-use svg::node::element::{Definitions, Line, Marker, Path, Rectangle, Text};
+use svg::node::element::{Circle, Definitions, Line, Marker, Path, Rectangle, Text};
 use svg::node::{Node, Text as TextNode};
 use svg::Document;
-
-const PARTICIPANT_WIDTH: u32 = 300;
-const PARTICIPANT_HEIGHT: u32 = 100;
-const PARTICIPANT_SPACE: u32 = 150;
 
 static ARROW_HEAD_ID: &str = "arrow";
 
 static LIGHT_BLUE: &str = "#add3ff";
 static MEDIUM_BLUE: &str = "#62acff";
 
-struct GridSize {
-    col_bounds: Vec<u32>,
-    row_bounds: Vec<u32>,
-}
-
-impl GridSize {
-    fn get_col_center(&self, col: usize) -> u32 {
-        let start = self.col_bounds[col];
-        start + (self.col_bounds[col + 1] - start) / 2
-    }
-
-    fn get_row_center(&self, row: usize) -> u32 {
-        let start = self.row_bounds[row];
-        start + (self.row_bounds[row + 1] - start) / 2
-    }
-
-    fn height(&self) -> u32 {
-        *self.row_bounds.last().unwrap()
-    }
-}
-
 pub fn render(diagram: &SequenceDiagram) -> String {
-    let width = (PARTICIPANT_WIDTH + PARTICIPANT_SPACE) * diagram.get_participants().len() as u32;
     let grid_size = calculate_grid(diagram);
+    let width = grid_size.width();
     let height = grid_size.height();
     let mut renderer = SVGRenderer::new(width, height);
 
@@ -50,17 +28,26 @@ pub fn render(diagram: &SequenceDiagram) -> String {
 
                     // render lifeline
                     renderer.render_line(
-                        Point2::new(center_x, grid_size.row_bounds[idx]),
-                        Point2::new(center_x, height - PARTICIPANT_HEIGHT),
+                        Point2::new(center_x, grid_size.row_bounds[idx + 1]),
+                        Point2::new(center_x, height - participant.height()),
                         3,
                         0,
                         MEDIUM_BLUE,
                         None,
                     );
 
-                    // render participant box
-                    renderer.render_participant(participant, center_x, 0);
-                    renderer.render_participant(participant, center_x, height - PARTICIPANT_HEIGHT);
+                    // render participant at the top
+                    renderer.render_participant(
+                        participant,
+                        center_x,
+                        grid_size.row_bounds[idx + 1] - participant.height(),
+                    );
+                    // render participant at the bottom
+                    renderer.render_participant(
+                        participant,
+                        center_x,
+                        height - grid_size.row_bounds[1],
+                    );
                 }
                 Event::MessageSent(msg) => {
                     render_message(&mut renderer, msg, idx, diagram, &grid_size);
@@ -154,25 +141,6 @@ fn render_self_message(
     renderer.render_text(&msg.label, x_offset + 10, y + 10, 35, "start");
 }
 
-fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
-    let mut col_bounds = vec![0];
-    for (idx, _) in diagram.get_participants().iter().enumerate() {
-        // TODO: column widths should be dynamically calculated based on messages and participants
-        col_bounds.push((PARTICIPANT_WIDTH + PARTICIPANT_SPACE) * (idx + 1) as u32);
-    }
-
-    let mut row_bounds = vec![0];
-    for (idx, _) in diagram.get_timeline().iter().enumerate() {
-        row_bounds.push(PARTICIPANT_HEIGHT * (idx + 1) as u32);
-    }
-    row_bounds.push(row_bounds.last().unwrap() + PARTICIPANT_HEIGHT);
-
-    GridSize {
-        col_bounds,
-        row_bounds,
-    }
-}
-
 struct SVGRenderer {
     doc: Document,
     participant_width: u32,
@@ -210,7 +178,14 @@ impl SVGRenderer {
         self.doc = self.doc.clone().add(node);
     }
 
-    pub fn render_participant(&mut self, participant: &Participant, x: u32, y: u32) {
+    fn render_participant(&mut self, participant: &Participant, x: u32, y: u32) {
+        match participant.get_kind() {
+            ParticipantKind::Default => self.render_default_participant(participant, x, y),
+            ParticipantKind::Actor => self.render_actor(participant, x, y),
+        }
+    }
+
+    fn render_default_participant(&mut self, participant: &Participant, x: u32, y: u32) {
         self.render_rect(
             x - self.participant_width / 2,
             y,
@@ -224,6 +199,53 @@ impl SVGRenderer {
             y + PARTICIPANT_HEIGHT / 3 * 2,
             50,
             "middle",
+        );
+    }
+
+    fn render_actor(&mut self, participant: &Participant, x: u32, y: u32) {
+        self.render_stickman(x, y + ACTOR_HEIGHT - 70, 70, ACTOR_HEIGHT - 70);
+        self.render_text(
+            &participant.get_label(),
+            x,
+            y + ACTOR_HEIGHT - 20,
+            50,
+            "middle",
+        );
+    }
+
+    fn render_stickman(&mut self, x: u32, y: u32, width: u32, height: u32) {
+        let x_offset = width / 2;
+        let third_height = height / 3;
+
+        let lines = vec![
+            (
+                Point2::new(x - x_offset, y),
+                Point2::new(x, y - third_height),
+            ), // left leg
+            (
+                Point2::new(x + x_offset, y),
+                Point2::new(x, y - third_height),
+            ), // right leg
+            (
+                Point2::new(x, y - third_height),
+                Point2::new(x, y - third_height * 2),
+            ), // torso
+            (
+                Point2::new(x - x_offset, y - height / 8 * 5),
+                Point2::new(x, y - height / 2),
+            ), // left arm
+            (
+                Point2::new(x + x_offset, y - height / 8 * 5),
+                Point2::new(x, y - height / 2),
+            ), // right arm
+        ];
+        for line in lines {
+            self.render_line(line.0, line.1, 5, 0, MEDIUM_BLUE, None);
+        }
+        self.render_circle(
+            Point2::new(x, y - height / 6 * 5),
+            third_height / 2,
+            MEDIUM_BLUE,
         );
     }
 
@@ -276,5 +298,15 @@ impl SVGRenderer {
             line = line.set("marker-end", format!("url(#{})", m));
         }
         self.add(line);
+    }
+
+    fn render_circle(&mut self, center: Point2<u32>, r: u32, stroke_colour: &str) {
+        let circle = Circle::new()
+            .set("cx", center.x)
+            .set("cy", center.y)
+            .set("r", r)
+            .set("fill", stroke_colour)
+            .set("stroke", stroke_colour);
+        self.add(circle);
     }
 }

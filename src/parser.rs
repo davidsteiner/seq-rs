@@ -1,4 +1,4 @@
-use crate::diagram::{LineStyle, Message, Participant, SequenceDiagram};
+use crate::diagram::{LineStyle, Message, Participant, ParticipantKind, SequenceDiagram};
 
 use pest::error::Error;
 use pest::iterators::Pair;
@@ -52,6 +52,11 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
 
 fn parse_participant(pair: Pair<Rule>) -> Participant {
     let mut pair = pair.into_inner();
+    let kind = match pair.next().unwrap().as_str() {
+        "participant" => ParticipantKind::Default,
+        "actor" => ParticipantKind::Actor,
+        unknown => panic!("Unexpected participant type: {:?}", unknown),
+    };
     let label_pair = pair.next().unwrap();
     let label = match label_pair.as_rule() {
         Rule::ident => label_pair.as_str(),
@@ -71,7 +76,7 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
         None => label,
     };
 
-    Participant::with_label(String::from(name), String::from(label))
+    Participant::with_label(String::from(name), kind, String::from(label))
 }
 
 fn parse_message(pair: Pair<Rule>) -> Message {
