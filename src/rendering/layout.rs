@@ -1,9 +1,4 @@
-use crate::diagram::{Event, Message, Participant, ParticipantKind, SequenceDiagram};
-
-pub const PARTICIPANT_WIDTH: u32 = 300;
-pub const PARTICIPANT_HEIGHT: u32 = 100;
-pub const PARTICIPANT_SPACE: u32 = 150;
-pub const ACTOR_HEIGHT: u32 = 160;
+use crate::diagram::{Event, SequenceDiagram};
 
 #[derive(Clone, Debug)]
 pub struct GridSize {
@@ -33,9 +28,11 @@ impl GridSize {
 
 pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     let mut col_bounds = vec![0];
-    for (idx, _) in diagram.get_participants().iter().enumerate() {
+    let mut y = 0;
+    for (_, participant) in diagram.get_participants().iter().enumerate() {
         // TODO: column widths should be dynamically calculated based on messages and participants
-        col_bounds.push((PARTICIPANT_WIDTH + PARTICIPANT_SPACE) * (idx + 1) as u32);
+        y += participant.width();
+        col_bounds.push(y);
     }
 
     let mut row_bounds = vec![0];
@@ -51,7 +48,6 @@ pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     }
 }
 
-
 fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
     match event {
         Event::MessageSent(msg) => msg.height(),
@@ -59,22 +55,7 @@ fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
     }
 }
 
-impl Draw for Participant {
-    fn height(&self) -> u32 {
-        match self.get_kind() {
-            ParticipantKind::Default => PARTICIPANT_HEIGHT,
-            ParticipantKind::Actor => ACTOR_HEIGHT,
-            ParticipantKind::Database => ACTOR_HEIGHT,
-        }
-    }
-}
-
-impl Draw for Message {
-    fn height(&self) -> u32 {
-        75
-    }
-}
-
-pub trait Draw {
+pub trait SizedComponent {
     fn height(&self) -> u32;
+    fn width(&self) -> u32;
 }

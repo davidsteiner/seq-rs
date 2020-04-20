@@ -3,12 +3,12 @@ extern crate pest;
 extern crate pest_derive;
 
 mod diagram;
-mod rendering;
 mod parser;
+mod rendering;
 
 pub fn parse(content: &str) -> Result<String, pest::error::Error<parser::Rule>> {
     let diagram = parser::create_diagram(content)?;
-    Ok(rendering::renderer::render(&diagram))
+    Ok(rendering::render(&diagram))
 }
 
 #[test]
