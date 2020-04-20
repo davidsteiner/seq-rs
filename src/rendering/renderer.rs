@@ -1,5 +1,5 @@
 use crate::diagram::{Event, LineStyle, Message, Participant, ParticipantKind, SequenceDiagram};
-use crate::layout::{
+use crate::rendering::layout::{
     calculate_grid, Draw, GridSize, ACTOR_HEIGHT, PARTICIPANT_HEIGHT, PARTICIPANT_WIDTH,
 };
 

@@ -51,15 +51,12 @@ pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     }
 }
 
+
 fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
     match event {
-        Event::MessageSent(msg) => get_message_height(msg),
+        Event::MessageSent(msg) => msg.height(),
         Event::ParticipantCreated(p) => diagram.find_participant(p).unwrap().1.height(),
     }
-}
-
-fn get_message_height(_msg: &Message) -> u32 {
-    PARTICIPANT_HEIGHT
 }
 
 impl Draw for Participant {
@@ -69,6 +66,12 @@ impl Draw for Participant {
             ParticipantKind::Actor => ACTOR_HEIGHT,
             ParticipantKind::Database => ACTOR_HEIGHT,
         }
+    }
+}
+
+impl Draw for Message {
+    fn height(&self) -> u32 {
+        75
     }
 }
 
