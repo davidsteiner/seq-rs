@@ -55,6 +55,7 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
     let kind = match pair.next().unwrap().as_str() {
         "participant" => ParticipantKind::Default,
         "actor" => ParticipantKind::Actor,
+        "database" => ParticipantKind::Database,
         unknown => panic!("Unexpected participant type: {:?}", unknown),
     };
     let label_pair = pair.next().unwrap();

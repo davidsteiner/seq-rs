@@ -67,6 +67,7 @@ impl Draw for Participant {
         match self.get_kind() {
             ParticipantKind::Default => PARTICIPANT_HEIGHT,
             ParticipantKind::Actor => ACTOR_HEIGHT,
+            ParticipantKind::Database => ACTOR_HEIGHT,
         }
     }
 }

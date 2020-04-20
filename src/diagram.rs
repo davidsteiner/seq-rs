@@ -32,6 +32,7 @@ impl Participant {
 pub enum ParticipantKind {
     Default,
     Actor,
+    Database,
 }
 
 #[derive(PartialEq, Debug, Clone)]

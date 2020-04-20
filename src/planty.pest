@@ -10,7 +10,7 @@ ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 
 participant = { participant_type ~ ( ident | string ) ~ participant_alias? }
-participant_type = { "participant" | "actor" }
+participant_type = { "participant" | "actor" | "database" }
 participant_alias = { "as" ~ ident }
 
 arrow = { "->" | "-->" | "<--" | "<-" }

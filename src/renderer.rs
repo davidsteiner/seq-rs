@@ -182,6 +182,7 @@ impl SVGRenderer {
         match participant.get_kind() {
             ParticipantKind::Default => self.render_default_participant(participant, x, y),
             ParticipantKind::Actor => self.render_actor(participant, x, y),
+            ParticipantKind::Database => self.render_database(participant, x, y),
         }
     }
 
@@ -200,6 +201,60 @@ impl SVGRenderer {
             50,
             "middle",
         );
+    }
+
+    fn render_database(&mut self, participant: &Participant, x: u32, y: u32) {
+        self.render_db_icon(x, y + ACTOR_HEIGHT - 70, 70, ACTOR_HEIGHT - 70);
+        self.render_text(
+            &participant.get_label(),
+            x,
+            y + ACTOR_HEIGHT - 20,
+            50,
+            "middle",
+        );
+    }
+
+    fn render_db_icon(&mut self, x: u32, y: u32, width: u32, height: u32) {
+        let x = x as i32;
+        let y = y as i32;
+        let width = width as i32;
+        let height = height as i32;
+        let left_x = x - width / 2;
+        let vu = height / 6;
+        // let d = format!("M 0 250 c 0 50 200 50 200 0 v -200 c 0 -50 -200 -50 -200 0 v 200 m 0 -200 c 0 50 200 50 200 0",
+        let d = format!(
+            "M {} {} c {} {} {} {} {} {} v {} c {} {} {} {} {} {} v {} m {} {} c {} {} {} {} {} {}",
+            left_x,
+            y - vu,
+            0,
+            vu,
+            width,
+            vu,
+            width,
+            0,
+            -(4 * vu),
+            0,
+            -vu,
+            -width,
+            -vu,
+            -width,
+            0,
+            4 * vu,
+            0,
+            -4 * vu,
+            0,
+            vu,
+            width,
+            vu,
+            width,
+            0
+        );
+        let path = Path::new()
+            .set("d", d)
+            .set("stroke", MEDIUM_BLUE)
+            .set("stroke-width", 5)
+            .set("fill", LIGHT_BLUE);
+        self.add(path);
     }
 
     fn render_actor(&mut self, participant: &Participant, x: u32, y: u32) {
