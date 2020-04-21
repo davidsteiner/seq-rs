@@ -3,13 +3,15 @@ use crate::rendering::layout::{GridSize, SizedComponent};
 use crate::rendering::renderer::Renderer;
 use nalgebra::Point2;
 
+const WIDTH_PER_CHAR: u32 = 25;
+
 impl SizedComponent for Message {
     fn height(&self) -> u32 {
         80
     }
 
     fn width(&self) -> u32 {
-        200
+        self.label.len() as u32 * WIDTH_PER_CHAR
     }
 }
 

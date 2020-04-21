@@ -67,5 +67,27 @@ fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {
             cols.push(y + p.width() / 2);
         }
     }
+
+    for row in diagram.get_timeline() {
+        for event in row {
+            if let Event::MessageSent(msg) = event {
+                let from_idx = diagram.find_participant(&msg.from).unwrap().0 as i32;
+                let to_idx = diagram.find_participant(&msg.to).unwrap().0 as i32;
+                let idx = match from_idx - to_idx {
+                    1 => to_idx,
+                    -1 => from_idx,
+                    0 => from_idx,
+                    _ => continue,
+                } as usize;
+
+                let missing_space = msg.width() as i32 - (cols[idx + 2] - cols[idx + 1]) as i32;
+                if missing_space > 0 {
+                    for col in &mut cols[idx + 2..] {
+                        *col += missing_space as u32;
+                    }
+                }
+            }
+        }
+    }
     cols
 }
