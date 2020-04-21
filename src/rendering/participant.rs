@@ -2,10 +2,10 @@ use crate::diagram::{Participant, ParticipantKind};
 use crate::rendering::layout::SizedComponent;
 use crate::rendering::renderer::Renderer;
 
-pub const PARTICIPANT_WIDTH: u32 = 300;
 pub const PARTICIPANT_HEIGHT: u32 = 100;
 pub const PARTICIPANT_SPACE: u32 = 150;
 pub const ACTOR_HEIGHT: u32 = 160;
+const WIDTH_PER_CHAR: u32 = 25;
 
 impl SizedComponent for Participant {
     fn height(&self) -> u32 {
@@ -17,8 +17,12 @@ impl SizedComponent for Participant {
     }
 
     fn width(&self) -> u32 {
-        PARTICIPANT_WIDTH + PARTICIPANT_SPACE
+        get_rendered_width(self) + PARTICIPANT_SPACE
     }
+}
+
+fn get_rendered_width(participant: &Participant) -> u32 {
+    participant.get_label().len() as u32 * WIDTH_PER_CHAR + 50
 }
 
 pub fn draw_participant(participant: &Participant, renderer: &mut dyn Renderer, x: u32, y: u32) {
@@ -35,13 +39,8 @@ fn draw_default_participant(
     x: u32,
     y: u32,
 ) {
-    renderer.render_rect(
-        x - PARTICIPANT_WIDTH / 2,
-        y,
-        PARTICIPANT_WIDTH,
-        PARTICIPANT_HEIGHT,
-        20,
-    );
+    let width = get_rendered_width(participant);
+    renderer.render_rect(x - width / 2, y, width, PARTICIPANT_HEIGHT, 20);
     renderer.render_text(
         &participant.get_label(),
         x,
