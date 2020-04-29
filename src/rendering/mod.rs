@@ -1,9 +1,11 @@
+mod group;
 mod layout;
 mod message;
 mod participant;
 mod renderer;
 
 use crate::diagram::{Event, SequenceDiagram};
+use crate::rendering::group::draw_group;
 use crate::rendering::layout::{calculate_grid, SizedComponent};
 use crate::rendering::message::draw_message;
 use crate::rendering::participant::draw_participant;
@@ -52,6 +54,10 @@ pub fn render(diagram: &SequenceDiagram) -> String {
                 Event::MessageSent(msg) => {
                     draw_message(&mut renderer, msg, idx, diagram, &grid_size);
                 }
+                Event::GroupStarted(group) => {
+                    draw_group(&mut renderer, &*group.borrow(), diagram, &grid_size);
+                }
+                Event::GroupEnded(_) => {}
             }
         }
     }

@@ -1,6 +1,6 @@
 use crate::diagram::{Participant, ParticipantKind};
 use crate::rendering::layout::SizedComponent;
-use crate::rendering::renderer::Renderer;
+use crate::rendering::renderer::{Renderer, LIGHT_BLUE, MEDIUM_BLUE};
 
 pub const PARTICIPANT_HEIGHT: u32 = 100;
 pub const PARTICIPANT_SPACE: u32 = 150;
@@ -40,7 +40,17 @@ fn draw_default_participant(
     y: u32,
 ) {
     let width = get_rendered_width(participant);
-    renderer.render_rect(x - width / 2, y, width, PARTICIPANT_HEIGHT, 20);
+    renderer.render_rect(
+        x - width / 2,
+        y,
+        width,
+        PARTICIPANT_HEIGHT,
+        LIGHT_BLUE,
+        1.0,
+        MEDIUM_BLUE,
+        5,
+        20,
+    );
     renderer.render_text(
         &participant.get_label(),
         x,

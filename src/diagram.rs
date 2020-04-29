@@ -1,4 +1,6 @@
 use self::Event::*;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 type ID = String;
 
@@ -49,9 +51,92 @@ pub enum LineStyle {
     Dashed,
 }
 
+#[derive(PartialEq, Debug, Clone)]
+struct Case {
+    row: u32,
+    label: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct SimpleGroup {
+    start: usize,
+    end: usize,
+    label: String,
+    header: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct AltGroup {
+    group: SimpleGroup,
+    cases: Vec<Case>,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Group {
+    SimpleGroup(SimpleGroup),
+    AltGroup(AltGroup),
+}
+
+impl Group {
+    fn end(&mut self, end: usize) {
+        match self {
+            Group::SimpleGroup(g) => g.end(end),
+            Group::AltGroup(g) => g.end(end),
+        }
+    }
+}
+
+impl SimpleGroup {
+    pub fn new(start: usize, label: String, header: String) -> SimpleGroup {
+        SimpleGroup {
+            start,
+            end: start,
+            label,
+            header,
+        }
+    }
+
+    pub fn end(&mut self, end: usize) {
+        self.end = end;
+    }
+
+    pub fn get_start(&self) -> usize {
+        self.start
+    }
+
+    pub fn get_end(&self) -> usize {
+        self.end
+    }
+
+    pub fn get_label(&self) -> &str {
+        &self.label
+    }
+}
+
+impl AltGroup {
+    pub fn new(start: usize, header: String) -> AltGroup {
+        let group = SimpleGroup {
+            start,
+            end: 0,
+            label: "alt".to_string(),
+            header,
+        };
+        AltGroup {
+            group,
+            cases: vec![],
+        }
+    }
+
+    pub fn end(&mut self, end: usize) {
+        self.group.end(end);
+    }
+}
+
 pub enum Event {
     ParticipantCreated(ID),
     MessageSent(Message),
+    GroupStarted(Rc<RefCell<Group>>),
+    GroupEnded(Rc<RefCell<Group>>),
 }
 
 pub struct SequenceDiagram {
@@ -100,5 +185,14 @@ impl SequenceDiagram {
             ParticipantKind::Default,
         ));
         self.timeline.push(vec![MessageSent(message)]);
+    }
+
+    pub fn start_group(&mut self, group: Rc<RefCell<Group>>) {
+        self.timeline.push(vec![GroupStarted(group)]);
+    }
+
+    pub fn end_group(&mut self, group: Rc<RefCell<Group>>) {
+        group.borrow_mut().end(self.timeline.len());
+        self.timeline.push(vec![GroupEnded(group)]);
     }
 }

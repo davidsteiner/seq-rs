@@ -1,8 +1,13 @@
-use crate::diagram::{LineStyle, Message, Participant, ParticipantKind, SequenceDiagram};
+use crate::diagram::{
+    AltGroup, Group, LineStyle, Message, Participant, ParticipantKind, SequenceDiagram, SimpleGroup,
+};
 
-use pest::error::Error;
+use pest::error::Error as PestError;
 use pest::iterators::Pair;
 use pest::Parser;
+use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::rc::Rc;
 
 #[derive(Parser)]
 #[grammar = "planty.pest"]
@@ -12,23 +17,46 @@ pub struct PParser;
 enum AstNode {
     Participant(Participant),
     Message(Message),
+    GroupStart(String, String),
+    GroupEnd,
 }
 
-pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error<Rule>> {
+pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
     let mut diagram = SequenceDiagram::new();
+    let mut active_groups: VecDeque<Rc<RefCell<Group>>> = VecDeque::new();
     let ast = parse(source)?;
 
     for node in ast {
         match node {
             AstNode::Participant(p) => diagram.add_participant(p),
             AstNode::Message(m) => diagram.add_message(m),
+            AstNode::GroupStart(group_type, header) => {
+                let timeline_pos = diagram.get_timeline().len();
+                let group = match group_type.as_str() {
+                    "group" => {
+                        Group::SimpleGroup(SimpleGroup::new(timeline_pos, header, "".to_string()))
+                    }
+                    "alt" => Group::AltGroup(AltGroup::new(timeline_pos, header)),
+                    _ => return Err(Error::new("Unexpected group type".to_string())),
+                };
+                let rc_group = Rc::new(RefCell::new(group));
+                active_groups.push_back(rc_group.clone());
+                diagram.start_group(rc_group);
+            }
+            AstNode::GroupEnd => match active_groups.pop_back() {
+                Some(group) => diagram.end_group(group),
+                None => return Err(Error::new("Found end without active group".to_string())),
+            },
         }
     }
 
-    Ok(diagram)
+    match active_groups.pop_back() {
+        None => Ok(diagram),
+        Some(_) => Err(Error::new("Group with no closing end keyword".to_string())),
+    }
 }
 
-fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
+fn parse(source: &str) -> Result<Vec<AstNode>, PestError<Rule>> {
     let mut ast = vec![];
 
     let pairs = PParser::parse(Rule::program, source)?;
@@ -46,8 +74,20 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::participant => AstNode::Participant(parse_participant(pair)),
         Rule::message => AstNode::Message(parse_message(pair)),
+        Rule::group_start => parse_group_start(pair),
+        Rule::group_end => AstNode::GroupEnd,
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     }
+}
+
+fn parse_group_start(pair: Pair<Rule>) -> AstNode {
+    let mut pair = pair.into_inner();
+    let group_type = pair.next().unwrap().as_str().to_string();
+    let header = match pair.next() {
+        Some(h) => h.as_str().to_string(),
+        None => "".to_string(),
+    };
+    AstNode::GroupStart(group_type, header)
 }
 
 fn parse_participant(pair: Pair<Rule>) -> Participant {
@@ -109,5 +149,31 @@ fn parse_message(pair: Pair<Rule>) -> Message {
         to: String::from(to),
         label: String::from(label),
         style: line_style,
+    }
+}
+
+pub enum Error {
+    PestError(PestError<Rule>),
+    ModelError { message: String },
+}
+
+impl From<PestError<Rule>> for Error {
+    fn from(err: PestError<Rule>) -> Self {
+        Error::PestError(err)
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::PestError(err) => write!(f, "{}", err.to_string()),
+            Error::ModelError { message } => write!(f, "{}", message),
+        }
+    }
+}
+
+impl Error {
+    fn new(message: String) -> Error {
+        Error::ModelError { message }
     }
 }

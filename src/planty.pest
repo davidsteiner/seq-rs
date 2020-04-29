@@ -4,6 +4,8 @@ program = _{ SOI ~ "\n"* ~ "@startuml" ~ "\n"+ ~ (stmt ~ "\n"+)* ~ "@enduml" ~ "
 stmt = {
       participant
     | message
+    | group_start
+    | group_end
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -18,6 +20,9 @@ label = { (!"\n" ~ ANY)* }
 message_label = { ":" ~ label }
 message = { ident ~ arrow ~ ident ~ message_label? }
 
+group_start = { group_type ~ label }
+group_type = { "group" | "alt" }
 
+group_end = { "end" }
 
 WHITESPACE = _{ " " | "\t" }

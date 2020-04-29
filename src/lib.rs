@@ -6,7 +6,7 @@ mod diagram;
 mod parser;
 mod rendering;
 
-pub fn parse(content: &str) -> Result<String, pest::error::Error<parser::Rule>> {
+pub fn parse(content: &str) -> Result<String, parser::Error> {
     let diagram = parser::create_diagram(content)?;
     Ok(rendering::render(&diagram))
 }

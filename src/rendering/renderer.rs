@@ -5,11 +5,25 @@ use svg::Document;
 
 static ARROW_HEAD_ID: &str = "arrow";
 
-static LIGHT_BLUE: &str = "#add3ff";
+pub static LIGHT_BLUE: &str = "#add3ff";
 pub static MEDIUM_BLUE: &str = "#62acff";
 
+pub static LIGHT_PURPLE: &str = "#eddbff";
+pub static MEDIUM_PURPLE: &str = "#ae8ccf";
+
 pub trait Renderer {
-    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, r: u32);
+    fn render_rect(
+        &mut self,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+        fill: &str,
+        fill_opacity: f32,
+        stroke: &str,
+        stroke_width: u32,
+        r: u32,
+    );
     fn render_circle(&mut self, center: Point2<u32>, r: u32, stroke_colour: &str);
     fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str);
     fn render_arrow(&mut self, p1: Point2<u32>, p2: Point2<u32>, dash: u8);
@@ -63,15 +77,27 @@ impl SVGRenderer {
 }
 
 impl Renderer for SVGRenderer {
-    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, r: u32) {
+    fn render_rect(
+        &mut self,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+        fill: &str,
+        fill_opacity: f32,
+        stroke: &str,
+        stroke_width: u32,
+        r: u32,
+    ) {
         let rect = Rectangle::new()
             .set("x", x)
             .set("y", y)
             .set("rx", r)
             .set("ry", r)
-            .set("fill", LIGHT_BLUE)
-            .set("stroke", MEDIUM_BLUE)
-            .set("stroke-width", 5)
+            .set("fill", fill)
+            .set("fill-opacity", fill_opacity)
+            .set("stroke", stroke)
+            .set("stroke-width", stroke_width)
             .set("width", width)
             .set("height", height);
         self.add(rect);
