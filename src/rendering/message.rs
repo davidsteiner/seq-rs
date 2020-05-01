@@ -7,7 +7,12 @@ const WIDTH_PER_CHAR: u32 = 25;
 
 impl SizedComponent for Message {
     fn height(&self) -> u32 {
-        80
+        if self.from != self.to && self.label.is_empty() {
+            // Regular messages with no label don't need as much vertical space
+            20
+        } else {
+            50
+        }
     }
 
     fn width(&self) -> u32 {
@@ -36,7 +41,7 @@ fn draw_regular_message(
     diagram: &SequenceDiagram,
     grid_size: &GridSize,
 ) {
-    let y = grid_size.get_row_center(row);
+    let y = grid_size.row_bounds[row + 1] - 10;
 
     let (src_idx, _) = diagram.find_participant(&msg.from).unwrap();
     let (dest_idx, _) = diagram.find_participant(&msg.to).unwrap();
