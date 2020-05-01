@@ -14,5 +14,8 @@ pub fn parse(content: &str, show_debug_lines: bool) -> Result<String, parser::Er
 #[test]
 fn example_puml() {
     let unparsed_file = std::fs::read_to_string("example.puml").expect("cannot read puml file");
-    println!("{}", parse(&unparsed_file, false).expect("Parsing puml failed"));
+    println!(
+        "{}",
+        parse(&unparsed_file, false).expect("Parsing puml failed")
+    );
 }

@@ -6,7 +6,7 @@ mod renderer;
 
 use crate::diagram::{Event, SequenceDiagram};
 use crate::rendering::group::draw_group;
-use crate::rendering::layout::{calculate_grid, SizedComponent, GridSize};
+use crate::rendering::layout::{calculate_grid, GridSize, SizedComponent};
 use crate::rendering::message::draw_message;
 use crate::rendering::participant::draw_participant;
 use crate::rendering::renderer::{Renderer, SVGRenderer, MEDIUM_BLUE};
@@ -77,7 +77,7 @@ fn render_debug_lines(renderer: &mut dyn Renderer, grid: &GridSize) {
             1,
             10,
             "#fd5600",
-            None
+            None,
         );
     }
     for row in &grid.row_bounds {
@@ -87,7 +87,7 @@ fn render_debug_lines(renderer: &mut dyn Renderer, grid: &GridSize) {
             1,
             10,
             "#fd5600",
-            None
+            None,
         );
     }
 }

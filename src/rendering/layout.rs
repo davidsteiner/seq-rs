@@ -43,8 +43,8 @@ fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
     match event {
         Event::MessageSent(msg) => msg.height(),
         Event::ParticipantCreated(p) => diagram.find_participant(p).unwrap().1.height(),
-        Event::GroupStarted(_) => 50,
-        Event::GroupEnded(_) => 20,
+        Event::GroupStarted(group) => group.borrow().height(),
+        Event::GroupEnded(_) => 5,
     }
 }
 
