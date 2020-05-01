@@ -1,5 +1,10 @@
 use crate::diagram::{Event, SequenceDiagram};
 
+pub trait SizedComponent {
+    fn height(&self) -> u32;
+    fn width(&self) -> u32;
+}
+
 #[derive(Clone, Debug)]
 pub struct GridSize {
     pub cols: Vec<u32>,
@@ -39,6 +44,10 @@ pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     }
 }
 
+pub fn string_width(s: &str, font_size: u8) -> u32 {
+    s.len() as u32 * font_size as u32 * 5 / 7
+}
+
 fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
     match event {
         Event::MessageSent(msg) => msg.height(),
@@ -46,11 +55,6 @@ fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
         Event::GroupStarted(group) => group.borrow().height(),
         Event::GroupEnded(_) => 5,
     }
-}
-
-pub trait SizedComponent {
-    fn height(&self) -> u32;
-    fn width(&self) -> u32;
 }
 
 fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {

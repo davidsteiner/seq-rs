@@ -1,9 +1,9 @@
 use crate::diagram::{LineStyle, Message, SequenceDiagram};
-use crate::rendering::layout::{GridSize, SizedComponent};
+use crate::rendering::layout::{string_width, GridSize, SizedComponent};
 use crate::rendering::renderer::Renderer;
 use nalgebra::Point2;
 
-const WIDTH_PER_CHAR: u32 = 25;
+const MESSAGE_FONT_SIZE: u8 = 25;
 
 impl SizedComponent for Message {
     fn height(&self) -> u32 {
@@ -16,7 +16,7 @@ impl SizedComponent for Message {
     }
 
     fn width(&self) -> u32 {
-        self.label.len() as u32 * WIDTH_PER_CHAR
+        string_width(&self.label, MESSAGE_FONT_SIZE)
     }
 }
 
@@ -60,7 +60,7 @@ fn draw_regular_message(
         (dest_x, src_x)
     };
     let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
-    renderer.render_text(&msg.label, text_x, y - 5, 35, "middle");
+    renderer.render_text(&msg.label, text_x, y - 5, MESSAGE_FONT_SIZE, "middle");
 }
 
 fn draw_self_message(
@@ -100,5 +100,11 @@ fn draw_self_message(
     );
     renderer.render_arrow(Point2::new(x_offset, y_end), Point2::new(x, y_end), dash);
 
-    renderer.render_text(&msg.label, x_offset + 10, y + 10, 35, "start");
+    renderer.render_text(
+        &msg.label,
+        x_offset + 10,
+        y + 10,
+        MESSAGE_FONT_SIZE,
+        "start",
+    );
 }
