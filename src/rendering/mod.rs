@@ -57,7 +57,8 @@ pub fn render(diagram: &SequenceDiagram, show_debug_lines: bool) -> String {
                 Event::GroupStarted(group) => {
                     draw_group(&mut renderer, &*group.borrow(), diagram, &grid_size);
                 }
-                Event::GroupEnded(_) => {}
+                Event::GroupEnded(_) => (),
+                Event::AltElse { .. } => (),
             }
         }
     }

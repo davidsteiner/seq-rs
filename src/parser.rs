@@ -18,6 +18,7 @@ enum AstNode {
     Participant(Participant),
     Message(Message),
     GroupStart(String, String),
+    AltElse(String),
     GroupEnd,
 }
 
@@ -43,6 +44,21 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 active_groups.push_back(rc_group.clone());
                 diagram.start_group(rc_group);
             }
+            AstNode::AltElse(label) => match active_groups.back_mut() {
+                Some(rc_group) => match *rc_group.borrow_mut() {
+                    Group::AltGroup(ref mut group) => {
+                        let row = diagram.get_timeline().len();
+                        let case_idx = group.add_case(label, row);
+                        diagram.add_alt_case(rc_group.clone(), case_idx);
+                    }
+                    _ => {
+                        return Err(Error::new(
+                            "else when active group is not an 'alt' group".to_string(),
+                        ))
+                    }
+                },
+                None => return Err(Error::new("else without active alt group".to_string())),
+            },
             AstNode::GroupEnd => match active_groups.pop_back() {
                 Some(group) => diagram.end_group(group),
                 None => return Err(Error::new("Found end without active group".to_string())),
@@ -76,6 +92,7 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
         Rule::message => AstNode::Message(parse_message(pair)),
         Rule::group_start => parse_group_start(pair),
         Rule::group_end => AstNode::GroupEnd,
+        Rule::alt_else => parse_alt_else(pair),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     }
 }
@@ -88,6 +105,12 @@ fn parse_group_start(pair: Pair<Rule>) -> AstNode {
         None => "".to_string(),
     };
     AstNode::GroupStart(group_type, header)
+}
+
+fn parse_alt_else(pair: Pair<Rule>) -> AstNode {
+    let mut pair = pair.into_inner();
+    let label = pair.next().unwrap().as_str().to_string();
+    AstNode::AltElse(label)
 }
 
 fn parse_participant(pair: Pair<Rule>) -> Participant {

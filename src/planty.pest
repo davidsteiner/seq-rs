@@ -6,6 +6,7 @@ stmt = {
     | message
     | group_start
     | group_end
+    | alt_else
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -21,6 +22,7 @@ message_label = { ":" ~ label }
 message = { ident ~ arrow ~ ident ~ message_label? }
 
 group_start = { group_type ~ label }
+alt_else = { "else" ~ label }
 group_type = { "group" | "alt" }
 
 group_end = { "end" }

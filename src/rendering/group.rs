@@ -2,6 +2,7 @@ use crate::diagram::{Event, Group, SequenceDiagram, SimpleGroup};
 use crate::rendering::layout::{string_width, GridSize, SizedComponent};
 use crate::rendering::renderer::{Renderer, LIGHT_PURPLE, MEDIUM_PURPLE};
 
+use nalgebra::Point2;
 use std::collections::HashSet;
 
 impl SizedComponent for Group {
@@ -20,22 +21,48 @@ pub fn draw_group(
     diagram: &SequenceDiagram,
     grid_size: &GridSize,
 ) {
-    match group.clone() {
-        Group::AltGroup(_) => (),
-        Group::SimpleGroup(group) => {
-            let text_y = grid_size.row_bounds[group.get_start() + 1] - 10;
-            let y = text_y - 25;
-            let x_pos = calculate_x_pos(&group, diagram, grid_size);
-            let x = x_pos.0 - 10;
-            let width = x_pos.1 - x_pos.0 + 20;
-            let end_y = grid_size.row_bounds[group.get_end() + 1];
-            let height = end_y - y;
-            renderer.render_rect(x, y, width, height, LIGHT_PURPLE, 0.2, MEDIUM_PURPLE, 2, 5);
+    let simple_group = match group {
+        Group::AltGroup(alt_group) => alt_group.get_simple_group(),
+        Group::SimpleGroup(ref group) => group,
+    };
+    let text_y = grid_size.row_bounds[simple_group.get_start() + 1] - 10;
+    let y = text_y - 25;
+    let x_pos = calculate_x_pos(simple_group, diagram, grid_size);
+    let x = x_pos.0 - 10;
+    let width = x_pos.1 - x_pos.0 + 20;
+    let end_y = grid_size.row_bounds[simple_group.get_end() + 1];
+    let height = end_y - y;
+    renderer.render_rect(x, y, width, height, LIGHT_PURPLE, 0.2, MEDIUM_PURPLE, 2, 5);
 
-            // Render the label in the top left corner
-            let width = string_width(group.get_label(), 20);
-            renderer.render_rect(x, y, width, 35, MEDIUM_PURPLE, 1.0, MEDIUM_PURPLE, 2, 5);
-            renderer.render_text(group.get_label(), x_pos.0, text_y, 20, "left");
+    // Render the label in the top left corner
+    let label_width = string_width(simple_group.get_label(), 20);
+    renderer.render_rect(
+        x,
+        y,
+        label_width,
+        35,
+        MEDIUM_PURPLE,
+        1.0,
+        MEDIUM_PURPLE,
+        2,
+        5,
+    );
+    renderer.render_text(simple_group.get_label(), x_pos.0, text_y, 20, "left");
+
+    // If this is an alt group, also render the else blocks
+    if let Group::AltGroup(alt_group) = group {
+        for case in alt_group.get_cases() {
+            let text_y = grid_size.row_bounds[case.row + 1];
+            let y = text_y - 20;
+            renderer.render_line(
+                Point2::new(x, y),
+                Point2::new(x + width, y),
+                2,
+                10,
+                MEDIUM_PURPLE,
+                None,
+            );
+            renderer.render_text(&case.label, x_pos.0, text_y, 20, "left");
         }
     }
 }

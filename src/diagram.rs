@@ -52,9 +52,9 @@ pub enum LineStyle {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-struct Case {
-    row: u32,
-    label: String,
+pub struct Case {
+    pub row: usize,
+    pub label: String,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -127,8 +127,22 @@ impl AltGroup {
         }
     }
 
+    pub fn add_case(&mut self, label: String, row: usize) -> usize {
+        let idx = self.cases.len();
+        self.cases.push(Case { label, row });
+        idx
+    }
+
     pub fn end(&mut self, end: usize) {
         self.group.end(end);
+    }
+
+    pub fn get_simple_group(&self) -> &SimpleGroup {
+        &self.group
+    }
+
+    pub fn get_cases(&self) -> &Vec<Case> {
+        &self.cases
     }
 }
 
@@ -137,6 +151,10 @@ pub enum Event {
     MessageSent(Message),
     GroupStarted(Rc<RefCell<Group>>),
     GroupEnded(Rc<RefCell<Group>>),
+    AltElse {
+        group: Rc<RefCell<Group>>,
+        case_idx: usize,
+    },
 }
 
 pub struct SequenceDiagram {
@@ -194,5 +212,9 @@ impl SequenceDiagram {
     pub fn end_group(&mut self, group: Rc<RefCell<Group>>) {
         group.borrow_mut().end(self.timeline.len());
         self.timeline.push(vec![GroupEnded(group)]);
+    }
+
+    pub fn add_alt_case(&mut self, group: Rc<RefCell<Group>>, case_idx: usize) {
+        self.timeline.push(vec![Event::AltElse { group, case_idx }]);
     }
 }
