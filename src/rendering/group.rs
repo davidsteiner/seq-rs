@@ -47,7 +47,14 @@ pub fn draw_group(
         2,
         5,
     );
+    // Render label in the left corner
     renderer.render_text(simple_group.get_label(), x_pos.0, text_y, 20, "left");
+    // Render header to the right of the label
+    let header = simple_group.get_header();
+    if !header.is_empty() {
+        let header = format!("[{}]", header);
+        renderer.render_text(&header, x + label_width + 10, text_y, 20, "left");
+    }
 
     // If this is an alt group, also render the else blocks
     if let Group::AltGroup(alt_group) = group {
@@ -62,7 +69,7 @@ pub fn draw_group(
                 MEDIUM_PURPLE,
                 None,
             );
-            renderer.render_text(&case.label, x_pos.0, text_y, 20, "left");
+            renderer.render_text(&format!("[{}]", &case.label), x_pos.0, text_y, 20, "left");
         }
     }
 }

@@ -111,6 +111,10 @@ impl SimpleGroup {
     pub fn get_label(&self) -> &str {
         &self.label
     }
+
+    pub fn get_header(&self) -> &str {
+        &self.header
+    }
 }
 
 impl AltGroup {
