@@ -117,6 +117,7 @@ impl Renderer for SVGRenderer {
         let text = Text::new()
             .set("x", x)
             .set("y", y)
+            .set("font-family", "Courier New")
             .set("font-size", font_size)
             .set("text-anchor", text_anchor)
             .add(TextNode::new(text));

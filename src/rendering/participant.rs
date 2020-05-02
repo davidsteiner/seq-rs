@@ -1,11 +1,11 @@
 use crate::diagram::{Participant, ParticipantKind};
-use crate::rendering::layout::SizedComponent;
+use crate::rendering::layout::{SizedComponent, string_width};
 use crate::rendering::renderer::{Renderer, LIGHT_BLUE, MEDIUM_BLUE};
 
 pub const PARTICIPANT_HEIGHT: u32 = 100;
 pub const PARTICIPANT_SPACE: u32 = 150;
 pub const ACTOR_HEIGHT: u32 = 160;
-const WIDTH_PER_CHAR: u32 = 25;
+const FONT_SIZE: u8 = 35;
 
 impl SizedComponent for Participant {
     fn height(&self) -> u32 {
@@ -22,7 +22,7 @@ impl SizedComponent for Participant {
 }
 
 fn get_rendered_width(participant: &Participant) -> u32 {
-    participant.get_label().len() as u32 * WIDTH_PER_CHAR + 50
+    string_width(participant.get_label(), FONT_SIZE) + 50
 }
 
 pub fn draw_participant(participant: &Participant, renderer: &mut dyn Renderer, x: u32, y: u32) {
@@ -55,7 +55,7 @@ fn draw_default_participant(
         &participant.get_label(),
         x,
         y + PARTICIPANT_HEIGHT / 3 * 2,
-        50,
+        FONT_SIZE,
         "middle",
     );
 }
@@ -66,7 +66,7 @@ pub fn draw_actor(renderer: &mut dyn Renderer, participant: &Participant, x: u32
         &participant.get_label(),
         x,
         y + ACTOR_HEIGHT - 20,
-        50,
+        FONT_SIZE,
         "middle",
     );
 }
@@ -77,7 +77,7 @@ fn draw_database(renderer: &mut dyn Renderer, participant: &Participant, x: u32,
         &participant.get_label(),
         x,
         y + ACTOR_HEIGHT - 20,
-        50,
+        FONT_SIZE,
         "middle",
     );
 }

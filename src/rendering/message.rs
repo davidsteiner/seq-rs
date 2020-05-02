@@ -16,7 +16,7 @@ impl SizedComponent for Message {
     }
 
     fn width(&self) -> u32 {
-        string_width(&self.label, MESSAGE_FONT_SIZE)
+        string_width(&self.label, MESSAGE_FONT_SIZE) + 40
     }
 }
 

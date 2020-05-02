@@ -45,7 +45,7 @@ pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
 }
 
 pub fn string_width(s: &str, font_size: u8) -> u32 {
-    s.len() as u32 * font_size as u32 * 5 / 7
+    s.len() as u32 * font_size as u32 * 9 / 14
 }
 
 fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
