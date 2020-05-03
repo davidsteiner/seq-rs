@@ -1,4 +1,4 @@
-use crate::diagram::{LineStyle, Message, SequenceDiagram};
+use crate::diagram::{LineStyle, Message};
 use crate::rendering::layout::{string_width, GridSize, SizedComponent};
 use crate::rendering::renderer::Renderer;
 use nalgebra::Point2;
@@ -20,17 +20,11 @@ impl SizedComponent for Message {
     }
 }
 
-pub fn draw_message(
-    renderer: &mut dyn Renderer,
-    msg: &Message,
-    row: usize,
-    diagram: &SequenceDiagram,
-    grid_size: &GridSize,
-) {
+pub fn draw_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, grid_size: &GridSize) {
     if msg.from == msg.to {
-        draw_self_message(renderer, msg, row, diagram, grid_size);
+        draw_self_message(renderer, msg, row, grid_size);
     } else {
-        draw_regular_message(renderer, msg, row, diagram, grid_size);
+        draw_regular_message(renderer, msg, row, grid_size);
     }
 }
 
@@ -38,13 +32,12 @@ fn draw_regular_message(
     renderer: &mut dyn Renderer,
     msg: &Message,
     row: usize,
-    diagram: &SequenceDiagram,
     grid_size: &GridSize,
 ) {
     let y = grid_size.row_bounds[row + 1] - 10;
 
-    let (src_idx, _) = diagram.find_participant(&msg.from).unwrap();
-    let (dest_idx, _) = diagram.find_participant(&msg.to).unwrap();
+    let src_idx = msg.from.borrow().get_idx();
+    let dest_idx = msg.to.borrow().get_idx();
     let src_x = grid_size.get_col_center(src_idx);
     let dest_x = grid_size.get_col_center(dest_idx);
     let dash = match &msg.style {
@@ -63,17 +56,11 @@ fn draw_regular_message(
     renderer.render_text(&msg.label, text_x, y - 5, MESSAGE_FONT_SIZE, "middle");
 }
 
-fn draw_self_message(
-    renderer: &mut dyn Renderer,
-    msg: &Message,
-    row: usize,
-    diagram: &SequenceDiagram,
-    grid_size: &GridSize,
-) {
+fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, grid_size: &GridSize) {
     let y = grid_size.get_row_center(row);
     let y_start = y - 20;
     let y_end = y + 20;
-    let (idx, _) = diagram.find_participant(&msg.from).unwrap();
+    let idx = msg.from.borrow().get_idx();
     let x = grid_size.get_col_center(idx);
     let x_offset = x + 35;
 

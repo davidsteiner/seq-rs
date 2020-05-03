@@ -22,9 +22,9 @@ pub fn render(diagram: &SequenceDiagram, show_debug_lines: bool) -> String {
     for (idx, row) in diagram.get_timeline().iter().enumerate() {
         for event in row {
             match event {
-                Event::ParticipantCreated(participant_id) => {
-                    let (col, participant) = diagram.find_participant(participant_id).unwrap();
-                    let center_x = grid_size.get_col_center(col);
+                Event::ParticipantCreated(p) => {
+                    let participant = p.borrow();
+                    let center_x = grid_size.get_col_center(participant.get_idx());
 
                     // render lifeline
                     renderer.render_line(
@@ -38,21 +38,21 @@ pub fn render(diagram: &SequenceDiagram, show_debug_lines: bool) -> String {
 
                     // render participant at the top
                     draw_participant(
-                        participant,
+                        &participant,
                         &mut renderer,
                         center_x,
                         grid_size.row_bounds[idx + 1] - participant.height(),
                     );
                     // render participant at the bottom
                     draw_participant(
-                        participant,
+                        &participant,
                         &mut renderer,
                         center_x,
                         height - grid_size.row_bounds[1],
                     );
                 }
                 Event::MessageSent(msg) => {
-                    draw_message(&mut renderer, msg, idx, diagram, &grid_size);
+                    draw_message(&mut renderer, &msg, idx, &grid_size);
                 }
                 Event::GroupStarted(group) => {
                     draw_group(&mut renderer, &*group.borrow(), diagram, &grid_size);

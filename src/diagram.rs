@@ -6,9 +6,10 @@ type ID = String;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Participant {
-    name: ID,
+    pub name: ID,
     label: String,
     kind: ParticipantKind,
+    idx: usize,
 }
 
 impl Participant {
@@ -18,7 +19,12 @@ impl Participant {
     }
 
     pub fn with_label(name: String, kind: ParticipantKind, label: String) -> Participant {
-        Participant { name, label, kind }
+        Participant {
+            name,
+            label,
+            kind,
+            idx: 0,
+        }
     }
 
     pub fn get_label(&self) -> &String {
@@ -27,6 +33,10 @@ impl Participant {
 
     pub fn get_kind(&self) -> &ParticipantKind {
         &self.kind
+    }
+
+    pub fn get_idx(&self) -> usize {
+        self.idx
     }
 }
 
@@ -39,8 +49,8 @@ pub enum ParticipantKind {
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Message {
-    pub from: ID,
-    pub to: ID,
+    pub from: Rc<RefCell<Participant>>,
+    pub to: Rc<RefCell<Participant>>,
     pub label: String,
     pub style: LineStyle,
 }
@@ -151,7 +161,7 @@ impl AltGroup {
 }
 
 pub enum Event {
-    ParticipantCreated(ID),
+    ParticipantCreated(Rc<RefCell<Participant>>),
     MessageSent(Message),
     GroupStarted(Rc<RefCell<Group>>),
     GroupEnded(Rc<RefCell<Group>>),
@@ -162,7 +172,7 @@ pub enum Event {
 }
 
 pub struct SequenceDiagram {
-    participants: Vec<Participant>,
+    participants: Vec<Rc<RefCell<Participant>>>,
     timeline: Vec<Vec<Event>>,
 }
 
@@ -174,7 +184,7 @@ impl SequenceDiagram {
         }
     }
 
-    pub fn get_participants(&self) -> &Vec<Participant> {
+    pub fn get_participants(&self) -> &Vec<Rc<RefCell<Participant>>> {
         &self.participants
     }
 
@@ -182,30 +192,37 @@ impl SequenceDiagram {
         &self.timeline
     }
 
-    pub fn find_participant(&self, id: &str) -> Option<(usize, &Participant)> {
+    fn find_participant_by_name(&self, id: &str) -> Option<Rc<RefCell<Participant>>> {
         self.participants
             .iter()
-            .enumerate()
-            .find(|(_idx, p)| p.name.as_str() == id)
+            .find(|&p| p.borrow().name.as_str() == id)
+            .cloned()
     }
 
-    pub fn add_participant(&mut self, participant: Participant) {
-        let existing = self.find_participant(&participant.name);
-        if existing.is_none() {
-            self.timeline[0].push(ParticipantCreated(participant.name.clone()));
-            self.participants.push(participant)
-        }
+    pub fn add_participant(&mut self, mut participant: Participant) -> Rc<RefCell<Participant>> {
+        participant.idx = self.participants.len();
+        let rc_participant = Rc::new(RefCell::new(participant));
+        self.timeline[0].push(ParticipantCreated(rc_participant.clone()));
+        self.participants.push(rc_participant.clone());
+        rc_participant
     }
 
-    pub fn add_message(&mut self, message: Message) {
-        self.add_participant(Participant::new(
-            message.from.clone(),
-            ParticipantKind::Default,
-        ));
-        self.add_participant(Participant::new(
-            message.to.clone(),
-            ParticipantKind::Default,
-        ));
+    pub fn add_message(&mut self, from: String, to: String, label: String, style: LineStyle) {
+        let mut get_participant = |name: &String| {
+            self.find_participant_by_name(&name).unwrap_or_else(|| {
+                let p = Participant::new(name.clone(), ParticipantKind::Default);
+                self.add_participant(p)
+            })
+        };
+        let from_participant = get_participant(&from);
+        let to_participant = get_participant(&to);
+
+        let message = Message {
+            from: from_participant,
+            to: to_participant,
+            label,
+            style,
+        };
         self.timeline.push(vec![MessageSent(message)]);
     }
 

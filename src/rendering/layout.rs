@@ -33,7 +33,7 @@ impl GridSize {
 pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     let mut row_bounds = vec![0];
     for events in diagram.get_timeline() {
-        let height = events.iter().map(|ev| get_event_height(ev, diagram)).max();
+        let height = events.iter().map(|ev| get_event_height(ev)).max();
         row_bounds.push(*row_bounds.last().unwrap() + height.unwrap());
     }
     row_bounds.push(row_bounds.last().unwrap() + row_bounds.get(1).unwrap());
@@ -48,10 +48,10 @@ pub fn string_width(s: &str, font_size: u8) -> u32 {
     s.len() as u32 * font_size as u32 * 9 / 14
 }
 
-fn get_event_height(event: &Event, diagram: &SequenceDiagram) -> u32 {
+fn get_event_height(event: &Event) -> u32 {
     match event {
         Event::MessageSent(msg) => msg.height(),
-        Event::ParticipantCreated(p) => diagram.find_participant(p).unwrap().1.height(),
+        Event::ParticipantCreated(p) => p.borrow().height(),
         Event::GroupStarted(group) => group.borrow().height(),
         Event::AltElse { .. } => 25,
         Event::GroupEnded(_) => 5,
@@ -64,22 +64,23 @@ fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {
 
     let mut y = 0;
     for (idx, p) in participants.iter().enumerate() {
+        let participant = p.borrow();
         if idx == 0 {
-            y += p.width() / 2;
+            y += participant.width() / 2;
         } else {
-            y += (participants[idx - 1].width() + p.width()) / 2;
+            y += (participants[idx - 1].borrow().width() + participant.width()) / 2;
         }
         cols.push(y);
         if idx == participants.len() - 1 {
-            cols.push(y + p.width() / 2);
+            cols.push(y + participant.width() / 2);
         }
     }
 
     for row in diagram.get_timeline() {
         for event in row {
             if let Event::MessageSent(msg) = event {
-                let from_idx = diagram.find_participant(&msg.from).unwrap().0 as i32;
-                let to_idx = diagram.find_participant(&msg.to).unwrap().0 as i32;
+                let from_idx = msg.from.borrow().get_idx() as i32;
+                let to_idx = msg.to.borrow().get_idx() as i32;
                 let idx = match from_idx - to_idx {
                     1 => to_idx,
                     -1 => from_idx,

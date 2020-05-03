@@ -1,5 +1,5 @@
 use crate::diagram::{Participant, ParticipantKind};
-use crate::rendering::layout::{SizedComponent, string_width};
+use crate::rendering::layout::{string_width, SizedComponent};
 use crate::rendering::renderer::{Renderer, LIGHT_BLUE, MEDIUM_BLUE};
 
 pub const PARTICIPANT_HEIGHT: u32 = 100;

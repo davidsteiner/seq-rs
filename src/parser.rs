@@ -1,5 +1,5 @@
 use crate::diagram::{
-    AltGroup, Group, LineStyle, Message, Participant, ParticipantKind, SequenceDiagram, SimpleGroup,
+    AltGroup, Group, LineStyle, Participant, ParticipantKind, SequenceDiagram, SimpleGroup,
 };
 
 use pest::error::Error as PestError;
@@ -16,7 +16,12 @@ pub struct PParser;
 #[derive(PartialEq, Debug, Clone)]
 enum AstNode {
     Participant(Participant),
-    Message(Message),
+    Message {
+        from: String,
+        to: String,
+        label: String,
+        style: LineStyle,
+    },
     GroupStart(String, String),
     AltElse(String),
     GroupEnd,
@@ -29,8 +34,15 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
 
     for node in ast {
         match node {
-            AstNode::Participant(p) => diagram.add_participant(p),
-            AstNode::Message(m) => diagram.add_message(m),
+            AstNode::Participant(p) => {
+                diagram.add_participant(p);
+            }
+            AstNode::Message {
+                from,
+                to,
+                label,
+                style,
+            } => diagram.add_message(from, to, label, style),
             AstNode::GroupStart(group_type, header) => {
                 let timeline_pos = diagram.get_timeline().len();
                 let group = match group_type.as_str() {
@@ -89,7 +101,7 @@ fn parse(source: &str) -> Result<Vec<AstNode>, PestError<Rule>> {
 fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::participant => AstNode::Participant(parse_participant(pair)),
-        Rule::message => AstNode::Message(parse_message(pair)),
+        Rule::message => parse_message(pair),
         Rule::group_start => parse_group_start(pair),
         Rule::group_end => AstNode::GroupEnd,
         Rule::alt_else => parse_alt_else(pair),
@@ -143,7 +155,7 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
     Participant::with_label(String::from(name), kind, String::from(label))
 }
 
-fn parse_message(pair: Pair<Rule>) -> Message {
+fn parse_message(pair: Pair<Rule>) -> AstNode {
     let mut pair = pair.into_inner();
     let left_participant = pair.next().unwrap();
     let arrow = pair.next().unwrap();
@@ -167,7 +179,7 @@ fn parse_message(pair: Pair<Rule>) -> Message {
         None => "",
     };
 
-    Message {
+    AstNode::Message {
         from: String::from(from),
         to: String::from(to),
         label: String::from(label),

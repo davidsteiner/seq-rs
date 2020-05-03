@@ -79,25 +79,21 @@ fn calculate_x_pos(
     diagram: &SequenceDiagram,
     grid_size: &GridSize,
 ) -> (u32, u32) {
-    let mut participants = HashSet::new();
+    let mut cols = HashSet::new();
     for t in &diagram.get_timeline()[group.get_start()..group.get_end()] {
         for ev in t {
             match ev {
                 Event::MessageSent(msg) => {
-                    participants.insert(&msg.from);
-                    participants.insert(&msg.to);
+                    cols.insert(msg.from.borrow().get_idx());
+                    cols.insert(msg.to.borrow().get_idx());
                 }
                 Event::ParticipantCreated(p) => {
-                    participants.insert(p);
+                    cols.insert(p.borrow().get_idx());
                 }
                 _ => (),
             }
         }
     }
-    let cols: HashSet<usize> = participants
-        .iter()
-        .map(|&p| diagram.find_participant(p).unwrap().0)
-        .collect();
 
     let min_col = grid_size.cols[cols.iter().min().unwrap() + 1];
     let max_col = grid_size.cols[cols.iter().max().unwrap() + 1];
