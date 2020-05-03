@@ -35,7 +35,7 @@ pub fn draw_group(
     renderer.render_rect(x, y, width, height, LIGHT_PURPLE, 0.2, MEDIUM_PURPLE, 2, 5);
 
     // Render the label in the top left corner
-    let label_width = string_width(simple_group.get_label(), 20);
+    let label_width = string_width(simple_group.get_label(), 20) + 20;
     renderer.render_rect(
         x,
         y,
@@ -47,8 +47,8 @@ pub fn draw_group(
         2,
         5,
     );
-    // Render label in the left corner
     renderer.render_text(simple_group.get_label(), x_pos.0, text_y, 20, "left");
+
     // Render header to the right of the label
     let header = simple_group.get_header();
     if !header.is_empty() {
