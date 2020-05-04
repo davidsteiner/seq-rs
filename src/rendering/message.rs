@@ -1,13 +1,30 @@
-use crate::diagram::{LineStyle, Message};
-use crate::rendering::layout::{string_width, GridSize, SizedComponent};
+use crate::diagram::{LineStyle, Message, MessageSent, SequenceDiagram, TimelineEvent};
+use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
 use crate::rendering::renderer::Renderer;
 use nalgebra::Point2;
 
 const MESSAGE_FONT_SIZE: u8 = 25;
 
-impl SizedComponent for Message {
+impl TimelineEvent for MessageSent {
+    fn draw(
+        &self,
+        _diagram: &SequenceDiagram,
+        renderer: &mut dyn Renderer,
+        grid: &GridSize,
+        row: usize,
+    ) {
+        draw_message(renderer, &self.message, row, grid);
+    }
+
+    fn reserved_width(&self) -> Option<ReservedWidth> {
+        let from_idx = self.message.from.borrow().get_idx();
+        let to_idx = self.message.to.borrow().get_idx();
+        let width = string_width(&self.message.label, MESSAGE_FONT_SIZE) + 40;
+        Some(ReservedWidth::new(from_idx, to_idx, width))
+    }
+
     fn height(&self) -> u32 {
-        if self.from != self.to && self.label.is_empty() {
+        if self.message.from != self.message.to && self.message.label.is_empty() {
             // Regular messages with no label don't need as much vertical space
             20
         } else {
@@ -15,8 +32,14 @@ impl SizedComponent for Message {
         }
     }
 
-    fn width(&self) -> u32 {
-        string_width(&self.label, MESSAGE_FONT_SIZE) + 40
+    fn col_range(&self) -> Option<(usize, usize)> {
+        let from_idx = self.message.from.borrow().get_idx();
+        let to_idx = self.message.to.borrow().get_idx();
+        Some(if from_idx < to_idx {
+            (from_idx, to_idx)
+        } else {
+            (to_idx, from_idx)
+        })
     }
 }
 

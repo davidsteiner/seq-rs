@@ -1,17 +1,79 @@
-use crate::diagram::{Event, Group, SequenceDiagram, SimpleGroup};
-use crate::rendering::layout::{string_width, GridSize, SizedComponent};
+use crate::diagram::{
+    AltElse, Group, GroupEnded, GroupStarted, SequenceDiagram, SimpleGroup, TimelineEvent,
+};
+use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
 use crate::rendering::renderer::{Renderer, LIGHT_PURPLE, MEDIUM_PURPLE};
 
 use nalgebra::Point2;
 use std::collections::HashSet;
 
-impl SizedComponent for Group {
+impl TimelineEvent for GroupStarted {
+    fn draw(
+        &self,
+        diagram: &SequenceDiagram,
+        renderer: &mut dyn Renderer,
+        grid: &GridSize,
+        _row: usize,
+    ) {
+        draw_group(renderer, &self.group.borrow(), diagram, grid);
+    }
+
+    fn reserved_width(&self) -> Option<ReservedWidth> {
+        None
+    }
+
     fn height(&self) -> u32 {
         40
     }
 
-    fn width(&self) -> u32 {
-        unimplemented!()
+    fn col_range(&self) -> Option<(usize, usize)> {
+        None
+    }
+}
+
+impl TimelineEvent for GroupEnded {
+    fn draw(
+        &self,
+        _diagram: &SequenceDiagram,
+        _renderer: &mut dyn Renderer,
+        _grid: &GridSize,
+        _row: usize,
+    ) {
+    }
+
+    fn reserved_width(&self) -> Option<ReservedWidth> {
+        None
+    }
+
+    fn height(&self) -> u32 {
+        5
+    }
+
+    fn col_range(&self) -> Option<(usize, usize)> {
+        None
+    }
+}
+
+impl TimelineEvent for AltElse {
+    fn draw(
+        &self,
+        _diagram: &SequenceDiagram,
+        _renderer: &mut dyn Renderer,
+        _grid: &GridSize,
+        _row: usize,
+    ) {
+    }
+
+    fn reserved_width(&self) -> Option<ReservedWidth> {
+        None
+    }
+
+    fn height(&self) -> u32 {
+        25
+    }
+
+    fn col_range(&self) -> Option<(usize, usize)> {
+        None
     }
 }
 
@@ -82,15 +144,9 @@ fn calculate_x_pos(
     let mut cols = HashSet::new();
     for t in &diagram.get_timeline()[group.get_start()..group.get_end()] {
         for ev in t {
-            match ev {
-                Event::MessageSent(msg) => {
-                    cols.insert(msg.from.borrow().get_idx());
-                    cols.insert(msg.to.borrow().get_idx());
-                }
-                Event::ParticipantCreated(p) => {
-                    cols.insert(p.borrow().get_idx());
-                }
-                _ => (),
+            if let Some((col1, col2)) = ev.col_range() {
+                cols.insert(col1);
+                cols.insert(col2);
             }
         }
     }

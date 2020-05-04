@@ -60,8 +60,8 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 Some(rc_group) => match *rc_group.borrow_mut() {
                     Group::AltGroup(ref mut group) => {
                         let row = diagram.get_timeline().len();
-                        let case_idx = group.add_case(label, row);
-                        diagram.add_alt_case(rc_group.clone(), case_idx);
+                        group.add_case(label, row);
+                        diagram.add_alt_case();
                     }
                     _ => {
                         return Err(Error::new(

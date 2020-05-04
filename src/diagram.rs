@@ -1,8 +1,22 @@
-use self::Event::*;
+use crate::rendering::layout::{GridSize, ReservedWidth};
+use crate::rendering::renderer::Renderer;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 type ID = String;
+
+pub trait TimelineEvent {
+    fn draw(
+        &self,
+        diagram: &SequenceDiagram,
+        renderer: &mut dyn Renderer,
+        grid: &GridSize,
+        row: usize,
+    );
+    fn reserved_width(&self) -> Option<ReservedWidth>;
+    fn height(&self) -> u32;
+    fn col_range(&self) -> Option<(usize, usize)>;
+}
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Participant {
@@ -160,20 +174,25 @@ impl AltGroup {
     }
 }
 
-pub enum Event {
-    ParticipantCreated(Rc<RefCell<Participant>>),
-    MessageSent(Message),
-    GroupStarted(Rc<RefCell<Group>>),
-    GroupEnded(Rc<RefCell<Group>>),
-    AltElse {
-        group: Rc<RefCell<Group>>,
-        case_idx: usize,
-    },
+pub struct ParticipantCreated {
+    pub(crate) participant: Rc<RefCell<Participant>>,
 }
+
+pub struct MessageSent {
+    pub(crate) message: Message,
+}
+
+pub struct GroupStarted {
+    pub(crate) group: Rc<RefCell<Group>>,
+}
+
+pub struct GroupEnded;
+
+pub struct AltElse;
 
 pub struct SequenceDiagram {
     participants: Vec<Rc<RefCell<Participant>>>,
-    timeline: Vec<Vec<Event>>,
+    timeline: Vec<Vec<Box<dyn TimelineEvent>>>,
 }
 
 impl SequenceDiagram {
@@ -188,7 +207,7 @@ impl SequenceDiagram {
         &self.participants
     }
 
-    pub fn get_timeline(&self) -> &Vec<Vec<Event>> {
+    pub fn get_timeline(&self) -> &Vec<Vec<Box<dyn TimelineEvent>>> {
         &self.timeline
     }
 
@@ -202,7 +221,9 @@ impl SequenceDiagram {
     pub fn add_participant(&mut self, mut participant: Participant) -> Rc<RefCell<Participant>> {
         participant.idx = self.participants.len();
         let rc_participant = Rc::new(RefCell::new(participant));
-        self.timeline[0].push(ParticipantCreated(rc_participant.clone()));
+        self.timeline[0].push(Box::new(ParticipantCreated {
+            participant: rc_participant.clone(),
+        }));
         self.participants.push(rc_participant.clone());
         rc_participant
     }
@@ -223,19 +244,19 @@ impl SequenceDiagram {
             label,
             style,
         };
-        self.timeline.push(vec![MessageSent(message)]);
+        self.timeline.push(vec![Box::new(MessageSent { message })]);
     }
 
     pub fn start_group(&mut self, group: Rc<RefCell<Group>>) {
-        self.timeline.push(vec![GroupStarted(group)]);
+        self.timeline.push(vec![Box::new(GroupStarted { group })]);
     }
 
     pub fn end_group(&mut self, group: Rc<RefCell<Group>>) {
         group.borrow_mut().end(self.timeline.len());
-        self.timeline.push(vec![GroupEnded(group)]);
+        self.timeline.push(vec![Box::new(GroupEnded)]);
     }
 
-    pub fn add_alt_case(&mut self, group: Rc<RefCell<Group>>, case_idx: usize) {
-        self.timeline.push(vec![Event::AltElse { group, case_idx }]);
+    pub fn add_alt_case(&mut self) {
+        self.timeline.push(vec![Box::new(AltElse)]);
     }
 }

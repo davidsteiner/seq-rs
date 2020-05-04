@@ -1,15 +1,12 @@
-mod group;
-mod layout;
-mod message;
-mod participant;
-mod renderer;
+pub mod group;
+pub mod layout;
+pub mod message;
+pub mod participant;
+pub mod renderer;
 
-use crate::diagram::{Event, SequenceDiagram};
-use crate::rendering::group::draw_group;
-use crate::rendering::layout::{calculate_grid, GridSize, SizedComponent};
-use crate::rendering::message::draw_message;
-use crate::rendering::participant::draw_participant;
-use crate::rendering::renderer::{Renderer, SVGRenderer, MEDIUM_BLUE};
+use crate::diagram::SequenceDiagram;
+use crate::rendering::layout::{calculate_grid, GridSize};
+use crate::rendering::renderer::{Renderer, SVGRenderer};
 
 use nalgebra::Point2;
 
@@ -19,47 +16,9 @@ pub fn render(diagram: &SequenceDiagram, show_debug_lines: bool) -> String {
     let height = grid_size.height();
     let mut renderer = SVGRenderer::new(width, height);
 
-    for (idx, row) in diagram.get_timeline().iter().enumerate() {
+    for (row_idx, row) in diagram.get_timeline().iter().enumerate() {
         for event in row {
-            match event {
-                Event::ParticipantCreated(p) => {
-                    let participant = p.borrow();
-                    let center_x = grid_size.get_col_center(participant.get_idx());
-
-                    // render lifeline
-                    renderer.render_line(
-                        Point2::new(center_x, grid_size.row_bounds[idx + 1]),
-                        Point2::new(center_x, height - participant.height()),
-                        3,
-                        0,
-                        MEDIUM_BLUE,
-                        None,
-                    );
-
-                    // render participant at the top
-                    draw_participant(
-                        &participant,
-                        &mut renderer,
-                        center_x,
-                        grid_size.row_bounds[idx + 1] - participant.height(),
-                    );
-                    // render participant at the bottom
-                    draw_participant(
-                        &participant,
-                        &mut renderer,
-                        center_x,
-                        height - grid_size.row_bounds[1],
-                    );
-                }
-                Event::MessageSent(msg) => {
-                    draw_message(&mut renderer, &msg, idx, &grid_size);
-                }
-                Event::GroupStarted(group) => {
-                    draw_group(&mut renderer, &*group.borrow(), diagram, &grid_size);
-                }
-                Event::GroupEnded(_) => (),
-                Event::AltElse { .. } => (),
-            }
+            event.draw(diagram, &mut renderer, &grid_size, row_idx);
         }
     }
 
