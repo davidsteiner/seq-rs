@@ -39,11 +39,15 @@ impl TimelineEvent for MessageSent {
     }
 
     fn height(&self) -> u32 {
-        if self.message.from != self.message.to && self.message.label.is_empty() {
-            // Regular messages with no label don't need as much vertical space
-            20
+        if self.message.from != self.message.to {
+            if self.message.label.is_empty() {
+                // Regular messages with no label don't need as much vertical space
+                20
+            } else {
+                40
+            }
         } else {
-            50
+            55
         }
     }
 
@@ -72,7 +76,7 @@ fn draw_regular_message(
     row: usize,
     grid_size: &GridSize,
 ) {
-    let y = grid_size.row_bounds[row + 1] - 10;
+    let y = grid_size.get_row_bottom(row) - 10;
 
     let src_idx = msg.from.borrow().get_idx();
     let dest_idx = msg.to.borrow().get_idx();

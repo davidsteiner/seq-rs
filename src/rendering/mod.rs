@@ -37,14 +37,20 @@ fn render_debug_lines(renderer: &mut dyn Renderer, grid: &GridSize) {
             None,
         );
     }
-    for row in &grid.row_bounds {
-        renderer.render_line(
-            Point2::new(0, *row),
-            Point2::new(grid.width(), *row),
-            1,
-            10,
-            "#fd5600",
-            None,
-        );
+
+    for row in 0..grid.num_rows() {
+        //for y in (grid.get_row_top(row), grid.get_row_bottom(row)) {
+        let mut render_line = |y: u32| {
+            renderer.render_line(
+                Point2::new(0, y),
+                Point2::new(grid.width(), y),
+                1,
+                10,
+                "#fd5600",
+                None,
+            )
+        };
+        render_line(grid.get_row_top(row));
+        render_line(grid.get_row_bottom(row));
     }
 }

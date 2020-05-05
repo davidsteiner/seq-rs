@@ -66,14 +66,12 @@ impl TimelineEvent for ParticipantCreated {
         row: usize,
     ) {
         let participant = self.participant.borrow();
-        let height = grid.height();
         let center_x = grid.get_col_center(participant.get_idx());
-        let y = grid.row_bounds[row + 1] - self.height();
 
         // render lifeline
         renderer.render_line(
-            Point2::new(center_x, grid.row_bounds[row + 1]),
-            Point2::new(center_x, height - self.height()),
+            Point2::new(center_x, grid.get_row_bottom(row)),
+            Point2::new(center_x, grid.get_row_top(grid.num_rows() - 1)),
             3,
             0,
             MEDIUM_BLUE,
@@ -81,14 +79,14 @@ impl TimelineEvent for ParticipantCreated {
         );
 
         // render participant at the top
-        draw_participant(&participant, renderer, center_x, y);
+        draw_participant(&participant, renderer, center_x, grid.get_row_top(row));
 
         // render participant at the bottom
         draw_participant(
             &participant,
             renderer,
             center_x,
-            height - grid.row_bounds[1],
+            grid.get_row_top(grid.num_rows() - 1),
         );
     }
 

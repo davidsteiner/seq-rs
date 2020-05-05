@@ -1,20 +1,44 @@
 use crate::diagram::SequenceDiagram;
 use crate::participant::get_participant_width;
 
+static ROW_MARGIN: u32 = 20;
+
 #[derive(Clone, Debug)]
 pub struct GridSize {
     pub cols: Vec<u32>,
-    pub row_bounds: Vec<u32>,
+    row_bounds: Vec<u32>,
 }
 
 impl GridSize {
+    fn new() -> GridSize {
+        GridSize {
+            row_bounds: vec![ROW_MARGIN],
+            cols: vec![0],
+        }
+    }
+
+    pub fn num_rows(&self) -> usize {
+        self.row_bounds.len() / 2
+    }
+
     pub fn get_col_center(&self, col: usize) -> u32 {
         self.cols[col + 1]
     }
 
     pub fn get_row_center(&self, row: usize) -> u32 {
-        let start = self.row_bounds[row];
-        start + (self.row_bounds[row + 1] - start) / 2
+        self.get_row_top(row) + self.get_row_height(row) / 2
+    }
+
+    pub fn get_row_height(&self, row: usize) -> u32 {
+        self.get_row_bottom(row) - self.get_row_top(row)
+    }
+
+    pub fn get_row_bottom(&self, row: usize) -> u32 {
+        self.row_bounds[row * 2 + 1]
+    }
+
+    pub fn get_row_top(&self, row: usize) -> u32 {
+        self.row_bounds[row * 2]
     }
 
     pub fn width(&self) -> u32 {
@@ -23,6 +47,12 @@ impl GridSize {
 
     pub fn height(&self) -> u32 {
         *self.row_bounds.last().unwrap()
+    }
+
+    fn add_row(&mut self, height: u32) {
+        let bottom = self.row_bounds.last().unwrap() + height;
+        self.row_bounds.push(bottom);
+        self.row_bounds.push(bottom + ROW_MARGIN);
     }
 }
 
@@ -55,17 +85,15 @@ impl ReservedWidth {
 }
 
 pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
-    let mut row_bounds = vec![0];
+    let mut grid = GridSize::new();
     for events in diagram.get_timeline() {
         let height = events.iter().map(|ev| ev.height()).max();
-        row_bounds.push(*row_bounds.last().unwrap() + height.unwrap());
+        grid.add_row(height.unwrap());
     }
-    row_bounds.push(row_bounds.last().unwrap() + row_bounds.get(1).unwrap());
+    grid.add_row(grid.get_row_height(0));
 
-    GridSize {
-        cols: calculate_cols(diagram),
-        row_bounds,
-    }
+    grid.cols = calculate_cols(diagram);
+    grid
 }
 
 pub fn string_width(s: &str, font_size: u8) -> u32 {

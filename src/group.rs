@@ -194,12 +194,12 @@ pub fn draw_group(
         Group::AltGroup(alt_group) => alt_group.get_simple_group(),
         Group::SimpleGroup(ref group) => group,
     };
-    let text_y = grid_size.row_bounds[simple_group.get_start() + 1] - 10;
+    let text_y = grid_size.get_row_bottom(simple_group.get_start()) - 10;
     let y = text_y - 25;
     let x_pos = calculate_x_pos(simple_group, diagram, grid_size);
     let x = x_pos.0 - 10;
     let width = x_pos.1 - x_pos.0 + 20;
-    let end_y = grid_size.row_bounds[simple_group.get_end() + 1];
+    let end_y = grid_size.get_row_bottom(simple_group.get_end());
     let height = end_y - y;
     let rect_params = RectParams {
         fill: LIGHT_PURPLE,
@@ -232,7 +232,7 @@ pub fn draw_group(
     // If this is an alt group, also render the else blocks
     if let Group::AltGroup(alt_group) = group {
         for case in alt_group.get_cases() {
-            let text_y = grid_size.row_bounds[case.row + 1];
+            let text_y = grid_size.get_row_bottom(case.row);
             let y = text_y - 20;
             renderer.render_line(
                 Point2::new(x, y),
