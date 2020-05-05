@@ -1,11 +1,118 @@
-use crate::diagram::{
-    AltElse, Group, GroupEnded, GroupStarted, SequenceDiagram, SimpleGroup, TimelineEvent,
-};
+use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
 use crate::rendering::renderer::{Renderer, LIGHT_PURPLE, MEDIUM_PURPLE};
 
 use nalgebra::Point2;
+use std::cell::RefCell;
 use std::collections::HashSet;
+use std::rc::Rc;
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Case {
+    pub row: usize,
+    pub label: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct SimpleGroup {
+    start: usize,
+    end: usize,
+    label: String,
+    header: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct AltGroup {
+    group: SimpleGroup,
+    cases: Vec<Case>,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Group {
+    SimpleGroup(SimpleGroup),
+    AltGroup(AltGroup),
+}
+
+impl Group {
+    pub fn end(&mut self, end: usize) {
+        match self {
+            Group::SimpleGroup(g) => g.end(end),
+            Group::AltGroup(g) => g.end(end),
+        }
+    }
+}
+
+impl SimpleGroup {
+    pub fn new(start: usize, label: String, header: String) -> SimpleGroup {
+        SimpleGroup {
+            start,
+            end: start,
+            label,
+            header,
+        }
+    }
+
+    pub fn end(&mut self, end: usize) {
+        self.end = end;
+    }
+
+    pub fn get_start(&self) -> usize {
+        self.start
+    }
+
+    pub fn get_end(&self) -> usize {
+        self.end
+    }
+
+    pub fn get_label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn get_header(&self) -> &str {
+        &self.header
+    }
+}
+
+impl AltGroup {
+    pub fn new(start: usize, header: String) -> AltGroup {
+        let group = SimpleGroup {
+            start,
+            end: 0,
+            label: "alt".to_string(),
+            header,
+        };
+        AltGroup {
+            group,
+            cases: vec![],
+        }
+    }
+
+    pub fn add_case(&mut self, label: String, row: usize) -> usize {
+        let idx = self.cases.len();
+        self.cases.push(Case { label, row });
+        idx
+    }
+
+    pub fn end(&mut self, end: usize) {
+        self.group.end(end);
+    }
+
+    pub fn get_simple_group(&self) -> &SimpleGroup {
+        &self.group
+    }
+
+    pub fn get_cases(&self) -> &Vec<Case> {
+        &self.cases
+    }
+}
+
+pub struct GroupStarted {
+    pub(crate) group: Rc<RefCell<Group>>,
+}
+
+pub struct GroupEnded;
+
+pub struct AltElse;
 
 impl TimelineEvent for GroupStarted {
     fn draw(

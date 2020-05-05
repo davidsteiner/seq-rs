@@ -3,6 +3,7 @@ extern crate pest;
 extern crate pest_derive;
 
 mod diagram;
+mod group;
 mod message;
 mod parser;
 mod participant;
