@@ -1,5 +1,5 @@
 use crate::diagram::SequenceDiagram;
-use crate::rendering::participant::get_participant_width;
+use crate::participant::get_participant_width;
 
 #[derive(Clone, Debug)]
 pub struct GridSize {

@@ -4,6 +4,7 @@ extern crate pest_derive;
 
 mod diagram;
 mod parser;
+mod participant;
 mod rendering;
 
 pub fn parse(content: &str, show_debug_lines: bool) -> Result<String, parser::Error> {
