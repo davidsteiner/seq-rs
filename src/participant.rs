@@ -79,7 +79,7 @@ impl TimelineEvent for ParticipantCreated {
         );
 
         // render participant at the top
-        draw_participant(&participant, renderer, center_x, grid.get_row_top(row));
+        draw_participant(&participant, renderer, center_x, grid.get_row_bottom(row) - self.height());
 
         // render participant at the bottom
         draw_participant(

@@ -153,7 +153,7 @@ impl TimelineEvent for GroupEnded {
     }
 
     fn height(&self) -> u32 {
-        5
+        0
     }
 
     fn col_range(&self) -> Option<(usize, usize)> {
