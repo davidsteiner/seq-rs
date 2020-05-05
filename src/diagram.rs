@@ -1,6 +1,7 @@
+use crate::message::{Message, MessageSent};
 use crate::participant::{Participant, ParticipantCreated, ParticipantKind};
 use crate::rendering::layout::{GridSize, ReservedWidth};
-use crate::rendering::renderer::Renderer;
+use crate::rendering::renderer::{LineStyle, Renderer};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -15,20 +16,6 @@ pub trait TimelineEvent {
     fn reserved_width(&self) -> Option<ReservedWidth>;
     fn height(&self) -> u32;
     fn col_range(&self) -> Option<(usize, usize)>;
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct Message {
-    pub from: Rc<RefCell<Participant>>,
-    pub to: Rc<RefCell<Participant>>,
-    pub label: String,
-    pub style: LineStyle,
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum LineStyle {
-    Plain,
-    Dashed,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -128,10 +115,6 @@ impl AltGroup {
     pub fn get_cases(&self) -> &Vec<Case> {
         &self.cases
     }
-}
-
-pub struct MessageSent {
-    pub(crate) message: Message,
 }
 
 pub struct GroupStarted {

@@ -1,7 +1,22 @@
-use crate::diagram::{LineStyle, Message, MessageSent, SequenceDiagram, TimelineEvent};
+use crate::diagram::{SequenceDiagram, TimelineEvent};
+use crate::participant::Participant;
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
-use crate::rendering::renderer::Renderer;
+use crate::rendering::renderer::{LineStyle, Renderer};
 use nalgebra::Point2;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Message {
+    pub from: Rc<RefCell<Participant>>,
+    pub to: Rc<RefCell<Participant>>,
+    pub label: String,
+    pub style: LineStyle,
+}
+
+pub struct MessageSent {
+    pub(crate) message: Message,
+}
 
 const MESSAGE_FONT_SIZE: u8 = 25;
 

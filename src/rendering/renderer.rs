@@ -11,6 +11,12 @@ pub static MEDIUM_BLUE: &str = "#62acff";
 pub static LIGHT_PURPLE: &str = "#eddbff";
 pub static MEDIUM_PURPLE: &str = "#ae8ccf";
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum LineStyle {
+    Plain,
+    Dashed,
+}
+
 pub trait Renderer {
     fn render_rect(
         &mut self,

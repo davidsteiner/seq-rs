@@ -1,6 +1,7 @@
-use crate::diagram::{AltGroup, Group, LineStyle, SequenceDiagram, SimpleGroup};
+use crate::diagram::{AltGroup, Group, SequenceDiagram, SimpleGroup};
 use crate::participant::{Participant, ParticipantKind};
 
+use crate::rendering::renderer::LineStyle;
 use pest::error::Error as PestError;
 use pest::iterators::Pair;
 use pest::Parser;

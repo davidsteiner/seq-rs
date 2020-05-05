@@ -1,6 +1,5 @@
 pub mod group;
 pub mod layout;
-pub mod message;
 pub mod renderer;
 
 use crate::diagram::SequenceDiagram;
