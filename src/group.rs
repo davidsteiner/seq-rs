@@ -1,6 +1,6 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
-use crate::rendering::renderer::{Renderer, LIGHT_PURPLE, MEDIUM_PURPLE};
+use crate::rendering::renderer::{RectParams, Renderer, LIGHT_PURPLE, MEDIUM_PURPLE};
 
 use nalgebra::Point2;
 use std::cell::RefCell;
@@ -201,21 +201,25 @@ pub fn draw_group(
     let width = x_pos.1 - x_pos.0 + 20;
     let end_y = grid_size.row_bounds[simple_group.get_end() + 1];
     let height = end_y - y;
-    renderer.render_rect(x, y, width, height, LIGHT_PURPLE, 0.2, MEDIUM_PURPLE, 2, 5);
+    let rect_params = RectParams {
+        fill: LIGHT_PURPLE,
+        fill_opacity: 0.2,
+        stroke: MEDIUM_PURPLE,
+        stroke_width: 2,
+        r: 5,
+    };
+    renderer.render_rect(x, y, width, height, rect_params);
 
     // Render the label in the top left corner
     let label_width = string_width(simple_group.get_label(), 20) + 20;
-    renderer.render_rect(
-        x,
-        y,
-        label_width,
-        35,
-        MEDIUM_PURPLE,
-        1.0,
-        MEDIUM_PURPLE,
-        2,
-        5,
-    );
+    let rect_params = RectParams {
+        fill: MEDIUM_PURPLE,
+        fill_opacity: 1.0,
+        stroke: MEDIUM_PURPLE,
+        stroke_width: 2,
+        r: 5,
+    };
+    renderer.render_rect(x, y, label_width, 35, rect_params);
     renderer.render_text(simple_group.get_label(), x_pos.0, text_y, 20, "left");
 
     // Render header to the right of the label

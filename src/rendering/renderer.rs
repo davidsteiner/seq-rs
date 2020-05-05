@@ -18,18 +18,7 @@ pub enum LineStyle {
 }
 
 pub trait Renderer {
-    fn render_rect(
-        &mut self,
-        x: u32,
-        y: u32,
-        width: u32,
-        height: u32,
-        fill: &str,
-        fill_opacity: f32,
-        stroke: &str,
-        stroke_width: u32,
-        r: u32,
-    );
+    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, params: RectParams);
     fn render_circle(&mut self, center: Point2<u32>, r: u32, stroke_colour: &str);
     fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str);
     fn render_arrow(&mut self, p1: Point2<u32>, p2: Point2<u32>, dash: u8);
@@ -83,27 +72,16 @@ impl SVGRenderer {
 }
 
 impl Renderer for SVGRenderer {
-    fn render_rect(
-        &mut self,
-        x: u32,
-        y: u32,
-        width: u32,
-        height: u32,
-        fill: &str,
-        fill_opacity: f32,
-        stroke: &str,
-        stroke_width: u32,
-        r: u32,
-    ) {
+    fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, params: RectParams) {
         let rect = Rectangle::new()
             .set("x", x)
             .set("y", y)
-            .set("rx", r)
-            .set("ry", r)
-            .set("fill", fill)
-            .set("fill-opacity", fill_opacity)
-            .set("stroke", stroke)
-            .set("stroke-width", stroke_width)
+            .set("rx", params.r)
+            .set("ry", params.r)
+            .set("fill", params.fill)
+            .set("fill-opacity", params.fill_opacity)
+            .set("stroke", params.stroke)
+            .set("stroke-width", params.stroke_width)
             .set("width", width)
             .set("height", height);
         self.add(rect);
@@ -234,5 +212,25 @@ impl Renderer for SVGRenderer {
             third_height / 2,
             MEDIUM_BLUE,
         );
+    }
+}
+
+pub struct RectParams<'a> {
+    pub fill: &'a str,
+    pub fill_opacity: f32,
+    pub stroke: &'a str,
+    pub stroke_width: u32,
+    pub r: u32,
+}
+
+impl Default for RectParams<'_> {
+    fn default() -> Self {
+        RectParams {
+            fill: LIGHT_BLUE,
+            fill_opacity: 1.0,
+            stroke: MEDIUM_BLUE,
+            stroke_width: 2,
+            r: 0,
+        }
     }
 }

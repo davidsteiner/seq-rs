@@ -1,6 +1,6 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
-use crate::rendering::renderer::{Renderer, LIGHT_BLUE, MEDIUM_BLUE};
+use crate::rendering::renderer::{RectParams, Renderer, MEDIUM_BLUE};
 use nalgebra::Point2;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -135,17 +135,11 @@ fn draw_default_participant(
     y: u32,
 ) {
     let width = get_rendered_width(participant);
-    renderer.render_rect(
-        x - width / 2,
-        y,
-        width,
-        PARTICIPANT_HEIGHT,
-        LIGHT_BLUE,
-        1.0,
-        MEDIUM_BLUE,
-        5,
-        20,
-    );
+    let rect_params = RectParams {
+        r: 10,
+        ..Default::default()
+    };
+    renderer.render_rect(x - width / 2, y, width, PARTICIPANT_HEIGHT, rect_params);
     renderer.render_text(
         &participant.get_label(),
         x,
