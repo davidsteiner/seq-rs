@@ -40,7 +40,7 @@ impl SequenceDiagram {
         &self.timeline
     }
 
-    fn find_participant_by_name(&self, id: &str) -> Option<Rc<RefCell<Participant>>> {
+    pub fn find_participant_by_name(&self, id: &str) -> Option<Rc<RefCell<Participant>>> {
         self.participants
             .iter()
             .find(|&p| p.borrow().name.as_str() == id)

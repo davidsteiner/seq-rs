@@ -7,6 +7,8 @@ stmt = {
     | group_start
     | group_end
     | alt_else
+    | activate
+    | deactivate
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -26,5 +28,8 @@ alt_else = { "else" ~ label }
 group_type = { "group" | "alt" }
 
 group_end = { "end" }
+
+activate = { "activate" ~ ident }
+deactivate = { "deactivate" ~ ident }
 
 WHITESPACE = _{ " " | "\t" }

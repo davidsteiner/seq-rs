@@ -26,6 +26,8 @@ enum AstNode {
     GroupStart(String, String),
     AltElse(String),
     GroupEnd,
+    Activate(String),
+    Deactivate(String),
 }
 
 pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
@@ -76,6 +78,42 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 Some(group) => diagram.end_group(group),
                 None => return Err(Error::new("Found end without active group".to_string())),
             },
+            AstNode::Activate(participant_name) => {
+                match diagram.find_participant_by_name(&participant_name) {
+                    Some(participant) => {
+                        participant
+                            .borrow_mut()
+                            .activate(diagram.get_timeline().len() - 1);
+                    }
+                    None => {
+                        return Err(Error::new(format!(
+                            "Missing participant for activate: {}",
+                            participant_name
+                        )))
+                    }
+                }
+            }
+            AstNode::Deactivate(participant_name) => {
+                match diagram.find_participant_by_name(&participant_name) {
+                    Some(participant) => {
+                        if !participant
+                            .borrow_mut()
+                            .deactivate(diagram.get_timeline().len() - 1)
+                        {
+                            return Err(Error::new(format!(
+                                "Attempting to deactivate participant with no activation: {}",
+                                participant_name
+                            )));
+                        }
+                    }
+                    None => {
+                        return Err(Error::new(format!(
+                            "Missing participant for deactivate: {}",
+                            participant_name
+                        )))
+                    }
+                }
+            }
         }
     }
 
@@ -106,6 +144,8 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
         Rule::group_start => parse_group_start(pair),
         Rule::group_end => AstNode::GroupEnd,
         Rule::alt_else => parse_alt_else(pair),
+        Rule::activate => parse_activate(pair),
+        Rule::deactivate => parse_deactivate(pair),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     }
 }
@@ -124,6 +164,18 @@ fn parse_alt_else(pair: Pair<Rule>) -> AstNode {
     let mut pair = pair.into_inner();
     let label = pair.next().unwrap().as_str().to_string();
     AstNode::AltElse(label)
+}
+
+fn parse_activate(pair: Pair<Rule>) -> AstNode {
+    let mut pair = pair.into_inner();
+    let label = pair.next().unwrap().as_str().to_string();
+    AstNode::Activate(label)
+}
+
+fn parse_deactivate(pair: Pair<Rule>) -> AstNode {
+    let mut pair = pair.into_inner();
+    let label = pair.next().unwrap().as_str().to_string();
+    AstNode::Deactivate(label)
 }
 
 fn parse_participant(pair: Pair<Rule>) -> Participant {

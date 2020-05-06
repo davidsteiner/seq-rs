@@ -11,6 +11,7 @@ pub struct Participant {
     label: String,
     kind: ParticipantKind,
     pub idx: usize,
+    activations: Vec<Activation>,
 }
 
 impl Participant {
@@ -25,6 +26,7 @@ impl Participant {
             label,
             kind,
             idx: 0,
+            activations: vec![],
         }
     }
 
@@ -38,6 +40,36 @@ impl Participant {
 
     pub fn get_idx(&self) -> usize {
         self.idx
+    }
+
+    pub fn activate(&mut self, start: usize) {
+        self.activations.push(Activation::new(start));
+    }
+
+    pub fn deactivate(&mut self, end: usize) -> bool {
+        match self.activations.last_mut() {
+            Some(activation) => {
+                activation.end(end);
+                true
+            }
+            None => false,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Activation {
+    start: usize,
+    end: Option<usize>,
+}
+
+impl Activation {
+    fn new(start: usize) -> Activation {
+        Activation { start, end: None }
+    }
+
+    fn end(&mut self, end: usize) {
+        self.end = Some(end);
     }
 }
 
@@ -79,7 +111,12 @@ impl TimelineEvent for ParticipantCreated {
         );
 
         // render participant at the top
-        draw_participant(&participant, renderer, center_x, grid.get_row_bottom(row) - self.height());
+        draw_participant(
+            &participant,
+            renderer,
+            center_x,
+            grid.get_row_bottom(row) - self.height(),
+        );
 
         // render participant at the bottom
         draw_participant(
