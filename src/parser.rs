@@ -1,9 +1,9 @@
 use crate::diagram::SequenceDiagram;
+use crate::error::Error;
 use crate::group::{AltGroup, Group, SimpleGroup};
 use crate::participant::{Participant, ParticipantKind};
 use crate::rendering::renderer::LineStyle;
 
-use pest::error::Error as PestError;
 use pest::iterators::Pair;
 use pest::Parser;
 use std::cell::RefCell;
@@ -14,7 +14,6 @@ use std::rc::Rc;
 #[grammar = "planty.pest"]
 pub struct PParser;
 
-#[derive(PartialEq, Debug, Clone)]
 enum AstNode {
     Participant(Participant),
     Message {
@@ -22,12 +21,18 @@ enum AstNode {
         to: String,
         label: String,
         style: LineStyle,
+        activation_modifier: Option<ActivationModifier>,
     },
     GroupStart(String, String),
     AltElse(String),
     GroupEnd,
     Activate(String),
     Deactivate(String),
+}
+
+enum ActivationModifier {
+    Activate,
+    Deactivate,
 }
 
 pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
@@ -46,9 +51,18 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 to,
                 label,
                 style,
+                activation_modifier,
             } => {
                 last_activation_point = Some(diagram.get_timeline().len());
-                diagram.add_message(from, to, label, style)
+                diagram.add_message(&from, &to, label, style);
+                if let Some(modifier) = activation_modifier {
+                    match modifier {
+                        ActivationModifier::Activate => {
+                            diagram.activate(&to, last_activation_point)
+                        }
+                        ActivationModifier::Deactivate => diagram.deactivate(&from)?,
+                    }
+                }
             }
             AstNode::GroupStart(group_type, header) => {
                 let timeline_pos = diagram.get_timeline().len();
@@ -86,25 +100,7 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 diagram.activate(&participant_name, last_activation_point);
             }
             AstNode::Deactivate(participant_name) => {
-                match diagram.find_participant_by_name(&participant_name) {
-                    Some(participant) => {
-                        if !participant
-                            .borrow_mut()
-                            .deactivate(diagram.get_timeline().len() - 1)
-                        {
-                            return Err(Error::new(format!(
-                                "Attempting to deactivate participant with no activation: {}",
-                                participant_name
-                            )));
-                        }
-                    }
-                    None => {
-                        return Err(Error::new(format!(
-                            "Missing participant for deactivate: {}",
-                            participant_name
-                        )))
-                    }
-                }
+                diagram.deactivate(&participant_name)?;
             }
         }
     }
@@ -115,31 +111,31 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
     }
 }
 
-fn parse(source: &str) -> Result<Vec<AstNode>, PestError<Rule>> {
+fn parse(source: &str) -> Result<Vec<AstNode>, Error> {
     let mut ast = vec![];
 
     let pairs = PParser::parse(Rule::program, source)?;
     for pair in pairs {
         if let Rule::stmt = pair.as_rule() {
             let inner = pair.into_inner().next().unwrap();
-            ast.push(build_ast_from_stmt(inner));
+            ast.push(build_ast_from_stmt(inner)?);
         }
     }
 
     Ok(ast)
 }
 
-fn build_ast_from_stmt(pair: Pair<Rule>) -> AstNode {
-    match pair.as_rule() {
+fn build_ast_from_stmt(pair: Pair<Rule>) -> Result<AstNode, Error> {
+    Ok(match pair.as_rule() {
         Rule::participant => AstNode::Participant(parse_participant(pair)),
-        Rule::message => parse_message(pair),
+        Rule::message => parse_message(pair)?,
         Rule::group_start => parse_group_start(pair),
         Rule::group_end => AstNode::GroupEnd,
         Rule::alt_else => parse_alt_else(pair),
         Rule::activate => parse_activate(pair),
         Rule::deactivate => parse_deactivate(pair),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
-    }
+    })
 }
 
 fn parse_group_start(pair: Pair<Rule>) -> AstNode {
@@ -183,7 +179,7 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
         Rule::ident => label_pair.as_str(),
         Rule::string => {
             // Strip the leading and trailing "
-            let str = &label_pair.as_str();
+            let str = label_pair.as_str();
             &str[1..str.len() - 1]
         }
         unknown_expr => panic!(
@@ -200,7 +196,7 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
     Participant::with_label(String::from(name), kind, String::from(label))
 }
 
-fn parse_message(pair: Pair<Rule>) -> AstNode {
+fn parse_message(pair: Pair<Rule>) -> Result<AstNode, Error> {
     let mut pair = pair.into_inner();
     let left_participant = pair.next().unwrap();
     let arrow = pair.next().unwrap();
@@ -219,41 +215,35 @@ fn parse_message(pair: Pair<Rule>) -> AstNode {
         from = left_participant.as_str();
         to = right_participant.as_str();
     };
-    let label = match pair.next() {
-        Some(l) => l.into_inner().next().unwrap().as_str(),
-        None => "",
-    };
 
-    AstNode::Message {
+    let mut activation_modifier = None;
+    let mut label = "";
+
+    for p in pair {
+        match p.as_rule() {
+            Rule::activation_modifier => {
+                if p.as_str() == "++" {
+                    activation_modifier = Some(ActivationModifier::Activate);
+                } else {
+                    activation_modifier = Some(ActivationModifier::Deactivate);
+                }
+            }
+            Rule::message_label => {
+                label = p.into_inner().next().unwrap().as_str();
+            }
+            _ => {
+                return Err(Error::new(
+                    "Unexpected rule when parsing message".to_string(),
+                ))
+            }
+        }
+    }
+
+    Ok(AstNode::Message {
         from: String::from(from),
         to: String::from(to),
         label: String::from(label),
         style: line_style,
-    }
-}
-
-pub enum Error {
-    PestError(PestError<Rule>),
-    ModelError { message: String },
-}
-
-impl From<PestError<Rule>> for Error {
-    fn from(err: PestError<Rule>) -> Self {
-        Error::PestError(err)
-    }
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Error::PestError(err) => write!(f, "{}", err.to_string()),
-            Error::ModelError { message } => write!(f, "{}", message),
-        }
-    }
-}
-
-impl Error {
-    fn new(message: String) -> Error {
-        Error::ModelError { message }
-    }
+        activation_modifier,
+    })
 }

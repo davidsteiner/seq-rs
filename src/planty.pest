@@ -21,7 +21,8 @@ participant_alias = { "as" ~ ident }
 arrow = { "->" | "-->" | "<--" | "<-" }
 label = { (!"\n" ~ ANY)* }
 message_label = { ":" ~ label }
-message = { ident ~ arrow ~ ident ~ message_label? }
+message = { ident ~ arrow ~ ident ~ activation_modifier? ~ message_label? }
+activation_modifier = { "++" | "--" }
 
 group_start = { group_type ~ label }
 alt_else = { "else" ~ label }

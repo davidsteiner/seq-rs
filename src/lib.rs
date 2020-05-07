@@ -3,13 +3,14 @@ extern crate pest;
 extern crate pest_derive;
 
 mod diagram;
+mod error;
 mod group;
 mod message;
 mod parser;
 mod participant;
 mod rendering;
 
-pub fn parse(content: &str, show_debug_lines: bool) -> Result<String, parser::Error> {
+pub fn parse(content: &str, show_debug_lines: bool) -> Result<String, error::Error> {
     let diagram = parser::create_diagram(content)?;
     Ok(rendering::render(&diagram, show_debug_lines))
 }

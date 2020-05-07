@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::group::{AltElse, Group, GroupEnded, GroupStarted};
 use crate::message::{Message, MessageSent};
 use crate::participant::{Participant, ParticipantCreated, ParticipantKind};
@@ -64,7 +65,7 @@ impl SequenceDiagram {
         })
     }
 
-    pub fn add_message(&mut self, from: String, to: String, label: String, style: LineStyle) {
+    pub fn add_message(&mut self, from: &str, to: &str, label: String, style: LineStyle) {
         let from_participant = self.get_or_create_participant(&from);
         let to_participant = self.get_or_create_participant(&to);
 
@@ -80,6 +81,29 @@ impl SequenceDiagram {
     pub fn activate(&mut self, participant_name: &str, start: Option<usize>) {
         let participant = self.get_or_create_participant(&participant_name);
         participant.borrow_mut().activate(start);
+    }
+
+    pub fn deactivate(&mut self, participant_name: &str) -> Result<(), Error> {
+        match self.find_participant_by_name(&participant_name) {
+            Some(participant) => {
+                if !participant
+                    .borrow_mut()
+                    .deactivate(self.get_timeline().len() - 1)
+                {
+                    return Err(Error::new(format!(
+                        "Attempting to deactivate participant with no activation: {}",
+                        participant_name
+                    )));
+                }
+            }
+            None => {
+                return Err(Error::new(format!(
+                    "Missing participant for deactivate: {}",
+                    participant_name
+                )))
+            }
+        };
+        Ok(())
     }
 
     pub fn start_group(&mut self, group: Rc<RefCell<Group>>) {
