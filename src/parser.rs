@@ -33,6 +33,7 @@ enum AstNode {
 pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
     let mut diagram = SequenceDiagram::new();
     let mut active_groups: VecDeque<Rc<RefCell<Group>>> = VecDeque::new();
+    let mut last_activation_point: Option<usize> = None;
     let ast = parse(source)?;
 
     for node in ast {
@@ -45,7 +46,10 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 to,
                 label,
                 style,
-            } => diagram.add_message(from, to, label, style),
+            } => {
+                last_activation_point = Some(diagram.get_timeline().len());
+                diagram.add_message(from, to, label, style)
+            }
             AstNode::GroupStart(group_type, header) => {
                 let timeline_pos = diagram.get_timeline().len();
                 let group = match group_type.as_str() {
@@ -79,19 +83,7 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 None => return Err(Error::new("Found end without active group".to_string())),
             },
             AstNode::Activate(participant_name) => {
-                match diagram.find_participant_by_name(&participant_name) {
-                    Some(participant) => {
-                        participant
-                            .borrow_mut()
-                            .activate(diagram.get_timeline().len() - 1);
-                    }
-                    None => {
-                        return Err(Error::new(format!(
-                            "Missing participant for activate: {}",
-                            participant_name
-                        )))
-                    }
-                }
+                diagram.activate(&participant_name, last_activation_point);
             }
             AstNode::Deactivate(participant_name) => {
                 match diagram.find_participant_by_name(&participant_name) {

@@ -19,6 +19,7 @@ pub struct MessageSent {
 }
 
 const MESSAGE_FONT_SIZE: u8 = 25;
+pub const ARROW_DISTANCE_FROM_BOTTOM: u32 = 10;
 
 impl TimelineEvent for MessageSent {
     fn draw(
@@ -76,7 +77,7 @@ fn draw_regular_message(
     row: usize,
     grid_size: &GridSize,
 ) {
-    let y = grid_size.get_row_bottom(row) - 10;
+    let y = grid_size.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM;
 
     let src_idx = msg.from.borrow().get_idx();
     let dest_idx = msg.to.borrow().get_idx();
@@ -101,7 +102,7 @@ fn draw_regular_message(
 fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, grid_size: &GridSize) {
     let y = grid_size.get_row_center(row);
     let y_start = y - 20;
-    let y_end = y + 20;
+    let y_end = grid_size.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM;
     let idx = msg.from.borrow().get_idx();
     let x = grid_size.get_col_center(idx);
     let x_offset = x + 35;

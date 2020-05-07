@@ -57,15 +57,16 @@ impl SequenceDiagram {
         rc_participant
     }
 
+    fn get_or_create_participant(&mut self, name: &str) -> Rc<RefCell<Participant>> {
+        self.find_participant_by_name(&name).unwrap_or_else(|| {
+            let p = Participant::new(name.to_string(), ParticipantKind::Default);
+            self.add_participant(p)
+        })
+    }
+
     pub fn add_message(&mut self, from: String, to: String, label: String, style: LineStyle) {
-        let mut get_participant = |name: &String| {
-            self.find_participant_by_name(&name).unwrap_or_else(|| {
-                let p = Participant::new(name.clone(), ParticipantKind::Default);
-                self.add_participant(p)
-            })
-        };
-        let from_participant = get_participant(&from);
-        let to_participant = get_participant(&to);
+        let from_participant = self.get_or_create_participant(&from);
+        let to_participant = self.get_or_create_participant(&to);
 
         let message = Message {
             from: from_participant,
@@ -74,6 +75,11 @@ impl SequenceDiagram {
             style,
         };
         self.timeline.push(vec![Box::new(MessageSent { message })]);
+    }
+
+    pub fn activate(&mut self, participant_name: &str, start: Option<usize>) {
+        let participant = self.get_or_create_participant(&participant_name);
+        participant.borrow_mut().activate(start);
     }
 
     pub fn start_group(&mut self, group: Rc<RefCell<Group>>) {

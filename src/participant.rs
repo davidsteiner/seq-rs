@@ -1,9 +1,17 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
+use crate::message::ARROW_DISTANCE_FROM_BOTTOM;
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
 use crate::rendering::renderer::{RectParams, Renderer, MEDIUM_BLUE};
 use nalgebra::Point2;
 use std::cell::RefCell;
 use std::rc::Rc;
+
+pub const PARTICIPANT_HEIGHT: u32 = 100;
+pub const PARTICIPANT_SPACE: u32 = 150;
+pub const ACTOR_HEIGHT: u32 = 160;
+pub const ACTIVATION_WIDTH: u32 = 10;
+pub const ACTIVATION_NESTING_OFFSET: u32 = 3;
+const FONT_SIZE: u8 = 35;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Participant {
@@ -42,14 +50,17 @@ impl Participant {
         self.idx
     }
 
-    pub fn activate(&mut self, start: usize) {
-        self.activations.push(Activation::new(start));
+    pub fn activate(&mut self, start: Option<usize>) {
+        let nesting = self.activations.iter().filter(|&a| a.end.is_none()).count();
+        self.activations
+            .push(Activation::new(start, nesting as u32));
     }
 
     pub fn deactivate(&mut self, end: usize) -> bool {
-        match self.activations.last_mut() {
-            Some(activation) => {
-                activation.end(end);
+        let activation = self.activations.iter_mut().rev().find(|a| a.end.is_none());
+        match activation {
+            Some(a) => {
+                a.end(end);
                 true
             }
             None => false,
@@ -59,13 +70,18 @@ impl Participant {
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Activation {
-    start: usize,
+    start: Option<usize>,
     end: Option<usize>,
+    nesting: u32,
 }
 
 impl Activation {
-    fn new(start: usize) -> Activation {
-        Activation { start, end: None }
+    fn new(start: Option<usize>, nesting: u32) -> Activation {
+        Activation {
+            start,
+            end: None,
+            nesting,
+        }
     }
 
     fn end(&mut self, end: usize) {
@@ -79,11 +95,6 @@ pub enum ParticipantKind {
     Actor,
     Database,
 }
-
-pub const PARTICIPANT_HEIGHT: u32 = 100;
-pub const PARTICIPANT_SPACE: u32 = 150;
-pub const ACTOR_HEIGHT: u32 = 160;
-const FONT_SIZE: u8 = 35;
 
 pub struct ParticipantCreated {
     pub(crate) participant: Rc<RefCell<Participant>>,
@@ -109,6 +120,24 @@ impl TimelineEvent for ParticipantCreated {
             MEDIUM_BLUE,
             None,
         );
+
+        // render activation boxes
+        for activation in &participant.activations {
+            let x =
+                center_x - ACTIVATION_WIDTH / 2 + activation.nesting * ACTIVATION_NESTING_OFFSET;
+            let start_y = match activation.start {
+                Some(row) => grid.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM,
+                None => grid.get_row_top(1),
+            };
+            let end_y = match activation.end {
+                Some(row) => grid.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM,
+                None => grid.get_row_bottom(grid.num_rows() - 2),
+            };
+            let params = RectParams {
+                ..Default::default()
+            };
+            renderer.render_rect(x, start_y, ACTIVATION_WIDTH, end_y - start_y, params);
+        }
 
         // render participant at the top
         draw_participant(
