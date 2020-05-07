@@ -104,7 +104,7 @@ fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, gri
     let y_start = y - 20;
     let y_end = grid_size.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM;
     let idx = msg.from.borrow().get_idx();
-    let x = grid_size.get_col_center(idx);
+    let x = grid_size.get_col_center(idx) + msg.from.borrow().lifeline_offset(row).1;
     let x_offset = x + 35;
 
     let dash = match &msg.style {

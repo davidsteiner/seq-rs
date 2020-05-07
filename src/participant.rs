@@ -66,6 +66,22 @@ impl Participant {
             None => false,
         }
     }
+
+    fn count_activations_at(&self, row: usize) -> usize {
+        self.activations.iter().filter(|&a| a.contains(row)).count()
+    }
+
+    pub fn lifeline_offset(&self, row: usize) -> (u32, u32) {
+        let count = self.count_activations_at(row);
+        if count > 0 {
+            (
+                ACTIVATION_WIDTH / 2,
+                ACTIVATION_WIDTH / 2 + (count - 1) as u32 * ACTIVATION_NESTING_OFFSET,
+            )
+        } else {
+            (0, 0)
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -86,6 +102,18 @@ impl Activation {
 
     fn end(&mut self, end: usize) {
         self.end = Some(end);
+    }
+
+    fn contains(&self, row: usize) -> bool {
+        let starts_before = match self.start {
+            Some(s) => s <= row,
+            None => true,
+        };
+        let ends_after = match self.end {
+            Some(s) => s >= row,
+            None => true,
+        };
+        starts_before && ends_after
     }
 }
 
