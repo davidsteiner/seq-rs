@@ -81,8 +81,19 @@ fn draw_regular_message(
 
     let src_idx = msg.from.borrow().get_idx();
     let dest_idx = msg.to.borrow().get_idx();
-    let src_x = grid_size.get_col_center(src_idx);
-    let dest_x = grid_size.get_col_center(dest_idx);
+    let (src_offset, dest_offset) = if src_idx < dest_idx {
+        (
+            msg.from.borrow().lifeline_offset(row).1,
+            msg.to.borrow().lifeline_offset(row).0,
+        )
+    } else {
+        (
+            msg.from.borrow().lifeline_offset(row).0,
+            msg.to.borrow().lifeline_offset(row).1,
+        )
+    };
+    let src_x = (grid_size.get_col_center(src_idx) as i32 + src_offset) as u32;
+    let dest_x = (grid_size.get_col_center(dest_idx) as i32 + dest_offset) as u32;
     let dash = match &msg.style {
         LineStyle::Plain => 0,
         LineStyle::Dashed => 10,
@@ -104,7 +115,7 @@ fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, gri
     let y_start = y - 20;
     let y_end = grid_size.get_row_bottom(row) - ARROW_DISTANCE_FROM_BOTTOM;
     let idx = msg.from.borrow().get_idx();
-    let x = grid_size.get_col_center(idx) + msg.from.borrow().lifeline_offset(row).1;
+    let x = grid_size.get_col_center(idx) + msg.from.borrow().lifeline_offset(row).1 as u32;
     let x_offset = x + 35;
 
     let dash = match &msg.style {

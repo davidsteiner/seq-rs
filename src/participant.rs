@@ -71,12 +71,13 @@ impl Participant {
         self.activations.iter().filter(|&a| a.contains(row)).count()
     }
 
-    pub fn lifeline_offset(&self, row: usize) -> (u32, u32) {
+    pub fn lifeline_offset(&self, row: usize) -> (i32, i32) {
         let count = self.count_activations_at(row);
         if count > 0 {
             (
-                ACTIVATION_WIDTH / 2,
-                ACTIVATION_WIDTH / 2 + (count - 1) as u32 * ACTIVATION_NESTING_OFFSET,
+                -((ACTIVATION_WIDTH / 2) as i32),
+                (ACTIVATION_WIDTH / 2) as i32
+                    + (count - 1) as i32 * ACTIVATION_NESTING_OFFSET as i32,
             )
         } else {
             (0, 0)
