@@ -6,6 +6,7 @@ mod diagram;
 mod error;
 mod group;
 mod message;
+mod note;
 mod parser;
 mod participant;
 mod rendering;

@@ -4,6 +4,7 @@ use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
 use crate::rendering::renderer::{RectParams, Renderer, MEDIUM_BLUE};
 use nalgebra::Point2;
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::rc::Rc;
 
 pub const PARTICIPANT_HEIGHT: u32 = 100;
@@ -13,7 +14,7 @@ pub const ACTIVATION_WIDTH: u32 = 10;
 pub const ACTIVATION_NESTING_OFFSET: u32 = 3;
 const FONT_SIZE: u8 = 35;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Participant {
     pub name: String,
     label: String,
@@ -85,6 +86,26 @@ impl Participant {
     }
 }
 
+impl Ord for Participant {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.idx.cmp(&other.idx)
+    }
+}
+
+impl PartialOrd for Participant {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Participant {
+    fn eq(&self, other: &Self) -> bool {
+        self.idx == other.idx
+    }
+}
+
+impl Eq for Participant {}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Activation {
     start: Option<usize>,
@@ -118,7 +139,7 @@ impl Activation {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub enum ParticipantKind {
     Default,
     Actor,
@@ -186,7 +207,7 @@ impl TimelineEvent for ParticipantCreated {
     }
 
     fn reserved_width(&self) -> Option<ReservedWidth> {
-        let col = self.participant.borrow().get_idx();
+        let col = self.participant.borrow().get_idx() + 1;
         let width = get_participant_width(&self.participant.borrow());
         Some(ReservedWidth::new(col, col, width))
     }

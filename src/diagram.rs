@@ -1,6 +1,7 @@
 use crate::error::Error;
 use crate::group::{AltElse, Group, GroupEnded, GroupStarted};
 use crate::message::{Message, MessageSent};
+use crate::note::{Note, NoteOrientation};
 use crate::participant::{Participant, ParticipantCreated, ParticipantKind};
 use crate::rendering::layout::{GridSize, ReservedWidth};
 use crate::rendering::renderer::{LineStyle, Renderer};
@@ -65,7 +66,13 @@ impl SequenceDiagram {
         })
     }
 
-    pub fn add_message(&mut self, from: &str, to: &str, label: String, style: LineStyle) {
+    pub fn add_message(
+        &mut self,
+        from: &str,
+        to: &str,
+        label: String,
+        style: LineStyle,
+    ) -> Message {
         let from_participant = self.get_or_create_participant(&from);
         let to_participant = self.get_or_create_participant(&to);
 
@@ -75,7 +82,10 @@ impl SequenceDiagram {
             label,
             style,
         };
-        self.timeline.push(vec![Box::new(MessageSent { message })]);
+        self.timeline.push(vec![Box::new(MessageSent {
+            message: message.clone(),
+        })]);
+        message
     }
 
     pub fn activate(&mut self, participant_name: &str, start: Option<usize>) {
@@ -117,5 +127,14 @@ impl SequenceDiagram {
 
     pub fn add_alt_case(&mut self) {
         self.timeline.push(vec![Box::new(AltElse)]);
+    }
+
+    pub fn add_note(&mut self, label: String, orientation: NoteOrientation, new_row: bool) {
+        let event = Box::new(Note { label, orientation });
+        if new_row {
+            self.timeline.push(vec![event]);
+        } else {
+            self.timeline.last_mut().unwrap().push(event);
+        }
     }
 }

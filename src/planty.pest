@@ -9,6 +9,7 @@ stmt = {
     | alt_else
     | activate
     | deactivate
+    | message_note
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -32,5 +33,9 @@ group_end = { "end" }
 
 activate = { "activate" ~ ident }
 deactivate = { "deactivate" ~ ident }
+
+message_note = { "note" ~ note_orientation ~ note_label }
+note_label = { ":" ~ label }
+note_orientation = { "left" | "right" }
 
 WHITESPACE = _{ " " | "\t" }

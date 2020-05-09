@@ -18,7 +18,7 @@ pub struct MessageSent {
     pub(crate) message: Message,
 }
 
-const MESSAGE_FONT_SIZE: u8 = 25;
+const MESSAGE_FONT_SIZE: u8 = 24;
 pub const ARROW_DISTANCE_FROM_BOTTOM: u32 = 10;
 
 impl TimelineEvent for MessageSent {
@@ -36,7 +36,7 @@ impl TimelineEvent for MessageSent {
         let from_idx = self.message.from.borrow().get_idx();
         let to_idx = self.message.to.borrow().get_idx();
         let width = string_width(&self.message.label, MESSAGE_FONT_SIZE) + 40;
-        Some(ReservedWidth::new(from_idx, to_idx, width))
+        Some(ReservedWidth::new(from_idx + 1, to_idx + 1, width))
     }
 
     fn height(&self) -> u32 {

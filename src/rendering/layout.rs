@@ -126,9 +126,9 @@ fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {
                 if reserved_width.col_distance() == 1 {
                     let width = reserved_width.width;
                     let idx = reserved_width.left_col;
-                    let missing_space = width as i32 - (cols[idx + 2] - cols[idx + 1]) as i32;
+                    let missing_space = width as i32 - (cols[idx + 1] - cols[idx]) as i32;
                     if missing_space > 0 {
-                        for col in &mut cols[idx + 2..] {
+                        for col in &mut cols[idx + 1..] {
                             *col += missing_space as u32;
                         }
                     }

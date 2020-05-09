@@ -3,6 +3,8 @@ use crate::error::Error;
 use crate::group::{AltGroup, Group, SimpleGroup};
 use crate::participant::{Participant, ParticipantKind};
 use crate::rendering::renderer::LineStyle;
+use crate::message::Message;
+use crate::note::NoteOrientation;
 
 use pest::iterators::Pair;
 use pest::Parser;
@@ -28,6 +30,10 @@ enum AstNode {
     GroupEnd,
     Activate(String),
     Deactivate(String),
+    MessageNote {
+        label: String,
+        direction: Direction,
+    },
 }
 
 enum ActivationModifier {
@@ -35,10 +41,15 @@ enum ActivationModifier {
     Deactivate,
 }
 
+enum Direction {
+    Left,
+    Right,
+}
+
 pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
     let mut diagram = SequenceDiagram::new();
     let mut active_groups: VecDeque<Rc<RefCell<Group>>> = VecDeque::new();
-    let mut last_activation_point: Option<usize> = None;
+    let mut last_message: Option<(usize, Message)> = None;
     let ast = parse(source)?;
 
     for node in ast {
@@ -53,16 +64,15 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 style,
                 activation_modifier,
             } => {
-                last_activation_point = Some(diagram.get_timeline().len());
-                diagram.add_message(&from, &to, label, style);
+                let row = diagram.get_timeline().len();
+                let msg = diagram.add_message(&from, &to, label, style);
                 if let Some(modifier) = activation_modifier {
                     match modifier {
-                        ActivationModifier::Activate => {
-                            diagram.activate(&to, last_activation_point)
-                        }
+                        ActivationModifier::Activate => diagram.activate(&to, Some(row)),
                         ActivationModifier::Deactivate => diagram.deactivate(&from)?,
                     }
                 }
+                last_message = Some((row, msg));
             }
             AstNode::GroupStart(group_type, header) => {
                 let timeline_pos = diagram.get_timeline().len();
@@ -97,11 +107,37 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                 None => return Err(Error::new("Found end without active group".to_string())),
             },
             AstNode::Activate(participant_name) => {
-                diagram.activate(&participant_name, last_activation_point);
+                diagram.activate(&participant_name, last_message.as_ref().map(|p| p.0));
             }
             AstNode::Deactivate(participant_name) => {
                 diagram.deactivate(&participant_name)?;
             }
+            AstNode::MessageNote { label, direction } => match last_message.as_ref() {
+                Some((_, msg)) => {
+                    let orientation = match direction {
+                        Direction::Left => {
+                            if msg.from < msg.to {
+                                NoteOrientation::LeftOf(msg.from.clone())
+                            } else {
+                                NoteOrientation::RightOf(msg.to.clone())
+                            }
+                        }
+                        Direction::Right => {
+                            if msg.from < msg.to {
+                                NoteOrientation::RightOf(msg.to.clone())
+                            } else {
+                                NoteOrientation::RightOf(msg.from.clone())
+                            }
+                        }
+                    };
+                    diagram.add_note(label, orientation, false);
+                }
+                None => {
+                    return Err(Error::new(
+                        "Adding note for message before defining any messages".to_string(),
+                    ))
+                }
+            },
         }
     }
 
@@ -134,6 +170,7 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> Result<AstNode, Error> {
         Rule::alt_else => parse_alt_else(pair),
         Rule::activate => parse_activate(pair),
         Rule::deactivate => parse_deactivate(pair),
+        Rule::message_note => parse_message_note(pair)?,
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     })
 }
@@ -245,5 +282,26 @@ fn parse_message(pair: Pair<Rule>) -> Result<AstNode, Error> {
         label: String::from(label),
         style: line_style,
         activation_modifier,
+    })
+}
+
+fn parse_message_note(pair: Pair<Rule>) -> Result<AstNode, Error> {
+    let mut pairs = pair.into_inner();
+    let direction = match pairs.next().unwrap().as_str() {
+        "left" => Direction::Left,
+        "right" => Direction::Right,
+        unexpected => {
+            return Err(Error::new(format!(
+                "Unexpected note orientation: {}",
+                unexpected
+            )))
+        }
+    };
+
+    let label = pairs.next().unwrap().into_inner().next().unwrap().as_str();
+
+    Ok(AstNode::MessageNote {
+        label: label.to_string(),
+        direction,
     })
 }
