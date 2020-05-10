@@ -11,6 +11,9 @@ pub static MEDIUM_BLUE: &str = "#62acff";
 pub static LIGHT_PURPLE: &str = "#eddbff";
 pub static MEDIUM_PURPLE: &str = "#ae8ccf";
 
+pub static LIGHT_GREY: &str = "#dedede";
+pub static DARK_GREY: &str = "#383838";
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum LineStyle {
     Plain,

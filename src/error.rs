@@ -1,6 +1,7 @@
 use crate::parser::Rule;
 use pest::error::Error as PestError;
 
+#[derive(Debug)]
 pub enum Error {
     PestError(PestError<Rule>),
     ModelError { message: String },

@@ -1,7 +1,7 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::participant::Participant;
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
-use crate::rendering::renderer::Renderer;
+use crate::rendering::renderer::{RectParams, Renderer, DARK_GREY, LIGHT_GREY};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -20,7 +20,8 @@ pub enum NoteOrientation {
 
 impl Note {
     fn width(&self) -> u32 {
-        string_width(&self.label, FONT_SIZE) + PARTICIPANT_MARGIN
+        let longest = &self.label.split("\\n").max_by_key(|t| t.len()).unwrap();
+        string_width(longest, FONT_SIZE)
     }
 }
 
@@ -33,12 +34,27 @@ impl TimelineEvent for Note {
         row: usize,
     ) {
         let x = match &self.orientation {
-            NoteOrientation::LeftOf(p) => grid.get_col_center(p.borrow().get_idx()) - self.width(),
+            NoteOrientation::LeftOf(p) => {
+                grid.get_col_center(p.borrow().get_idx()) - self.width() - PARTICIPANT_MARGIN
+            }
             NoteOrientation::RightOf(p) => {
                 grid.get_col_center(p.borrow().get_idx()) + PARTICIPANT_MARGIN
             }
         };
-        let y = grid.get_row_center(row);
+        let y = grid.get_row_top(row);
+        let params = RectParams {
+            fill: LIGHT_GREY,
+            stroke: DARK_GREY,
+            r: 3,
+            ..Default::default()
+        };
+        renderer.render_rect(
+            x - PARTICIPANT_MARGIN / 2,
+            y,
+            self.width() + PARTICIPANT_MARGIN,
+            self.height(),
+            params,
+        );
         renderer.render_text(&self.label, x, y, FONT_SIZE, "left");
     }
 
@@ -47,11 +63,16 @@ impl TimelineEvent for Note {
             NoteOrientation::LeftOf(p) => (p.borrow().get_idx(), p.borrow().get_idx() + 1),
             NoteOrientation::RightOf(p) => (p.borrow().get_idx() + 1, p.borrow().get_idx() + 2),
         };
-        Some(ReservedWidth::new(cols.0, cols.1, self.width()))
+        Some(ReservedWidth::new(
+            cols.0,
+            cols.1,
+            self.width() + PARTICIPANT_MARGIN * 2,
+        ))
     }
 
     fn height(&self) -> u32 {
-        FONT_SIZE as u32
+        (FONT_SIZE as usize * self.label.split("\\n").count()) as u32 * 11 / 10
+            + FONT_SIZE as u32 / 3
     }
 
     fn col_range(&self) -> Option<(usize, usize)> {
