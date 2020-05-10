@@ -119,7 +119,7 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
                             if msg.from < msg.to {
                                 NoteOrientation::LeftOf(msg.from.clone())
                             } else {
-                                NoteOrientation::RightOf(msg.to.clone())
+                                NoteOrientation::LeftOf(msg.to.clone())
                             }
                         }
                         Direction::Right => {
