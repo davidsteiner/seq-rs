@@ -36,6 +36,7 @@ pub trait Renderer {
     );
     fn render_db_icon(&mut self, x: u32, y: u32, width: u32, height: u32);
     fn render_stickman(&mut self, x: u32, y: u32, width: u32, height: u32);
+    fn render_note_box(&mut self, x: u32, y: u32, width: u32, height: u32, fill: &str, stroke: &str);
 }
 
 pub struct SVGRenderer {
@@ -155,7 +156,7 @@ impl Renderer for SVGRenderer {
         let height = height as i32;
         let left_x = x - width / 2;
         let vu = height / 6;
-        // let d = format!("M 0 250 c 0 50 200 50 200 0 v -200 c 0 -50 -200 -50 -200 0 v 200 m 0 -200 c 0 50 200 50 200 0",
+
         let d = format!(
             "M {} {} c {} {} {} {} {} {} v {} c {} {} {} {} {} {} v {} m {} {} c {} {} {} {} {} {}",
             left_x,
@@ -225,6 +226,34 @@ impl Renderer for SVGRenderer {
             third_height / 2,
             MEDIUM_BLUE,
         );
+    }
+
+    fn render_note_box(&mut self, x: u32, y: u32, width: u32, height: u32, fill: &str, stroke: &str) {
+        let x = x as i32;
+        let y = y as i32;
+        let width = width as i32;
+        let height = height as i32;
+        let corner_size = 15;
+
+        let d = format!(
+            "M {} {} h {} v {} h {} v {} z v {} h {}",
+            x + width - corner_size, // top right corner
+            y,
+            -(width - corner_size), // moving to top left
+            height, // moving to bottom left
+            width, // moving to bottom right
+            -(height - corner_size), // moving up to the other edge of top right (not the starting point)
+            // z moves it back to the starting point
+            corner_size,
+            corner_size,
+        );
+
+        let path = Path::new()
+            .set("d", d)
+            .set("stroke", stroke)
+            .set("stroke-width", 2)
+            .set("fill", fill);
+        self.add(path);
     }
 }
 

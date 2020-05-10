@@ -1,7 +1,7 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::participant::Participant;
 use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
-use crate::rendering::renderer::{RectParams, Renderer, DARK_GREY, LIGHT_GREY};
+use crate::rendering::renderer::{Renderer, DARK_GREY, LIGHT_GREY};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -42,19 +42,8 @@ impl TimelineEvent for Note {
             }
         };
         let y = grid.get_row_top(row);
-        let params = RectParams {
-            fill: LIGHT_GREY,
-            stroke: DARK_GREY,
-            r: 3,
-            ..Default::default()
-        };
-        renderer.render_rect(
-            x - PARTICIPANT_MARGIN / 2,
-            y,
-            self.width() + PARTICIPANT_MARGIN,
-            self.height(),
-            params,
-        );
+        let box_x = x - PARTICIPANT_MARGIN / 2;
+        renderer.render_note_box(box_x, y, self.width() + PARTICIPANT_MARGIN, self.height(), LIGHT_GREY, DARK_GREY);
         renderer.render_text(&self.label, x, y, FONT_SIZE, "left");
     }
 
