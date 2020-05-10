@@ -107,7 +107,13 @@ fn draw_regular_message(
         (dest_x, src_x)
     };
     let text_x = (text_bounds.1 - text_bounds.0) / 2 + text_bounds.0;
-    renderer.render_text(&msg.label, text_x, y - 5, MESSAGE_FONT_SIZE, "middle");
+    renderer.render_text(
+        &msg.label,
+        text_x,
+        y - MESSAGE_FONT_SIZE as u32 - 5,
+        MESSAGE_FONT_SIZE,
+        "middle",
+    );
 }
 
 fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, grid_size: &GridSize) {
@@ -144,7 +150,7 @@ fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, gri
     renderer.render_text(
         &msg.label,
         x_offset + 10,
-        y + 10,
+        y_start,
         MESSAGE_FONT_SIZE,
         "start",
     );

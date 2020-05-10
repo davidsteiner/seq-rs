@@ -257,29 +257,29 @@ fn draw_default_participant(
     renderer.render_text(
         &participant.get_label(),
         x,
-        y + PARTICIPANT_HEIGHT / 3 * 2,
+        y + PARTICIPANT_HEIGHT / 3,
         FONT_SIZE,
         "middle",
     );
 }
 
 pub fn draw_actor(renderer: &mut dyn Renderer, participant: &Participant, x: u32, y: u32) {
-    renderer.render_stickman(x, y + ACTOR_HEIGHT - 70, 70, ACTOR_HEIGHT - 70);
+    renderer.render_stickman(x, y + ACTOR_HEIGHT - 45, 70, ACTOR_HEIGHT - 70);
     renderer.render_text(
         &participant.get_label(),
         x,
-        y + ACTOR_HEIGHT - 20,
+        y + ACTOR_HEIGHT - 45,
         FONT_SIZE,
         "middle",
     );
 }
 
 fn draw_database(renderer: &mut dyn Renderer, participant: &Participant, x: u32, y: u32) {
-    renderer.render_db_icon(x, y + ACTOR_HEIGHT - 70, 70, ACTOR_HEIGHT - 70);
+    renderer.render_db_icon(x, y + ACTOR_HEIGHT - 45, 70, ACTOR_HEIGHT - 70);
     renderer.render_text(
         &participant.get_label(),
         x,
-        y + ACTOR_HEIGHT - 20,
+        y + ACTOR_HEIGHT - 45,
         FONT_SIZE,
         "middle",
     );

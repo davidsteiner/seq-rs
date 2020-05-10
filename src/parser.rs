@@ -1,10 +1,10 @@
 use crate::diagram::SequenceDiagram;
 use crate::error::Error;
 use crate::group::{AltGroup, Group, SimpleGroup};
-use crate::participant::{Participant, ParticipantKind};
-use crate::rendering::renderer::LineStyle;
 use crate::message::Message;
 use crate::note::NoteOrientation;
+use crate::participant::{Participant, ParticipantKind};
+use crate::rendering::renderer::LineStyle;
 
 use pest::iterators::Pair;
 use pest::Parser;

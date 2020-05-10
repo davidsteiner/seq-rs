@@ -1,5 +1,5 @@
 use nalgebra::Point2;
-use svg::node::element::{Circle, Definitions, Line, Marker, Path, Rectangle, Text};
+use svg::node::element::{Circle, Definitions, Element, Line, Marker, Path, Rectangle, Text};
 use svg::node::{Node, Text as TextNode};
 use svg::Document;
 
@@ -98,13 +98,23 @@ impl Renderer for SVGRenderer {
     }
 
     fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str) {
-        let text = Text::new()
+        let lines = text.split("\\n");
+        let mut text = Text::new()
             .set("x", x)
             .set("y", y)
             .set("font-family", "Courier New")
             .set("font-size", font_size)
-            .set("text-anchor", text_anchor)
-            .add(TextNode::new(text));
+            .set("text-anchor", text_anchor);
+
+        for (idx, line) in lines.enumerate() {
+            let line_height = if idx == 0 { "1em" } else { "1.1em" };
+            let mut tspan = Element::new("tspan");
+            tspan.assign("x", x);
+            tspan.assign("dy", line_height);
+            tspan.append(TextNode::new(line));
+            text = text.add(tspan);
+        }
+
         self.add(text);
     }
 

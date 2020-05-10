@@ -194,8 +194,7 @@ pub fn draw_group(
         Group::AltGroup(alt_group) => alt_group.get_simple_group(),
         Group::SimpleGroup(ref group) => group,
     };
-    let text_y = grid_size.get_row_bottom(simple_group.get_start()) - 10;
-    let y = text_y - 25;
+    let y = grid_size.get_row_top(simple_group.get_start());
     let x_pos = calculate_x_pos(simple_group, diagram, grid_size);
     let x = x_pos.0 - 10;
     let width = x_pos.1 - x_pos.0 + 20;
@@ -220,20 +219,19 @@ pub fn draw_group(
         r: 5,
     };
     renderer.render_rect(x, y, label_width, 35, rect_params);
-    renderer.render_text(simple_group.get_label(), x_pos.0, text_y, 20, "left");
+    renderer.render_text(simple_group.get_label(), x_pos.0, y, 20, "left");
 
     // Render header to the right of the label
     let header = simple_group.get_header();
     if !header.is_empty() {
         let header = format!("[{}]", header);
-        renderer.render_text(&header, x + label_width + 10, text_y, 20, "left");
+        renderer.render_text(&header, x + label_width + 10, y, 20, "left");
     }
 
     // If this is an alt group, also render the else blocks
     if let Group::AltGroup(alt_group) = group {
         for case in alt_group.get_cases() {
-            let text_y = grid_size.get_row_bottom(case.row);
-            let y = text_y - 20;
+            let y = grid_size.get_row_top(case.row);
             renderer.render_line(
                 Point2::new(x, y),
                 Point2::new(x + width, y),
@@ -242,7 +240,7 @@ pub fn draw_group(
                 MEDIUM_PURPLE,
                 None,
             );
-            renderer.render_text(&format!("[{}]", &case.label), x_pos.0, text_y, 20, "left");
+            renderer.render_text(&format!("[{}]", &case.label), x_pos.0, y, 20, "left");
         }
     }
 }
