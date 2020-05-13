@@ -1,6 +1,6 @@
 use crate::diagram::{SequenceDiagram, TimelineEvent};
 use crate::message::ARROW_DISTANCE_FROM_BOTTOM;
-use crate::rendering::layout::{string_width, GridSize, ReservedWidth};
+use crate::rendering::layout::{string_width, GridSize};
 use crate::rendering::renderer::{RectParams, Renderer, MEDIUM_BLUE};
 use nalgebra::Point2;
 use std::cell::RefCell;
@@ -204,12 +204,6 @@ impl TimelineEvent for ParticipantCreated {
             center_x,
             grid.get_row_top(grid.num_rows() - 1),
         );
-    }
-
-    fn reserved_width(&self) -> Option<ReservedWidth> {
-        let col = self.participant.borrow().get_idx() + 1;
-        let width = get_participant_width(&self.participant.borrow());
-        Some(ReservedWidth::new(col, col, width))
     }
 
     fn height(&self) -> u32 {

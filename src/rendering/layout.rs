@@ -1,5 +1,7 @@
 use crate::diagram::SequenceDiagram;
 use crate::participant::get_participant_width;
+use itertools::Itertools;
+use std::cmp::Ordering;
 
 static ROW_MARGIN: u32 = 20;
 
@@ -120,22 +122,28 @@ fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {
         }
     }
 
-    for row in diagram.get_timeline() {
-        for event in row {
-            if let Some(reserved_width) = event.reserved_width() {
-                if reserved_width.col_distance() == 1 {
-                    let width = reserved_width.width;
-                    let idx = reserved_width.left_col;
-                    let missing_space = width as i32 - (cols[idx + 1] - cols[idx]) as i32;
-                    if missing_space > 0 {
-                        for col in &mut cols[idx + 1..] {
-                            *col += missing_space as u32;
-                        }
-                    }
-                }
+    fn cmp(rw1: &ReservedWidth, rw2: &ReservedWidth) -> Ordering {
+        match rw1.col_distance().cmp(&rw2.col_distance()) {
+            Ordering::Equal => rw1.left_col.cmp(&rw2.left_col),
+            ordering => ordering,
+        }
+    }
+    let reserved_widths = diagram
+        .get_timeline()
+        .iter()
+        .flatten()
+        .map(|ev| ev.reserved_width())
+        .flatten()
+        .sorted_by(cmp);
+
+    for rw in reserved_widths {
+        let width = rw.width;
+        let missing_space = width as i32 - (cols[rw.right_col] - cols[rw.left_col]) as i32;
+        if missing_space > 0 {
+            for col in &mut cols[rw.right_col..] {
+                *col += missing_space as u32;
             }
         }
     }
-
     cols
 }

@@ -16,7 +16,9 @@ pub trait TimelineEvent {
         grid: &GridSize,
         row: usize,
     );
-    fn reserved_width(&self) -> Option<ReservedWidth>;
+    fn reserved_width(&self) -> Option<ReservedWidth> {
+        None
+    }
     fn height(&self) -> u32;
     fn col_range(&self) -> Option<(usize, usize)>;
 }

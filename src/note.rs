@@ -43,7 +43,14 @@ impl TimelineEvent for Note {
         };
         let y = grid.get_row_top(row);
         let box_x = x - PARTICIPANT_MARGIN / 2;
-        renderer.render_note_box(box_x, y, self.width() + PARTICIPANT_MARGIN, self.height(), LIGHT_GREY, DARK_GREY);
+        renderer.render_note_box(
+            box_x,
+            y,
+            self.width() + PARTICIPANT_MARGIN,
+            self.height(),
+            LIGHT_GREY,
+            DARK_GREY,
+        );
         renderer.render_text(&self.label, x, y, FONT_SIZE, "left");
     }
 
