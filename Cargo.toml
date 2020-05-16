@@ -10,3 +10,7 @@ nalgebra = "0.20"
 pest = "2.1"
 pest_derive = "2.1"
 svg = "0.7"
+
+[dev-dependencies]
+sxd-document = "0.3.2"
+sxd-xpath = "0.4.2"
