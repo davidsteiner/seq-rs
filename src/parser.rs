@@ -13,7 +13,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 
 #[derive(Parser)]
-#[grammar = "planty.pest"]
+#[grammar = "seq-rs.pest"]
 pub struct PParser;
 
 enum AstNode {
