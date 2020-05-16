@@ -1,4 +1,4 @@
-extern crate planty;
+extern crate seq_rs;
 extern crate sxd_document;
 extern crate sxd_xpath;
 
@@ -20,7 +20,7 @@ fn participants() {
     P -> db
     @enduml";
 
-    let svg = planty::parse(diagram_str, false).expect("Parsing failed");
+    let svg = seq_rs::parse(diagram_str, false).expect("Parsing failed");
 
     let package = parser::parse(&svg).expect("failed to parse SVG XML");
     let document = package.as_document();
@@ -48,7 +48,7 @@ fn messages() {
     c -> a
     @enduml";
 
-    let svg = planty::parse(diagram_str, false).expect("Parsing failed");
+    let svg = seq_rs::parse(diagram_str, false).expect("Parsing failed");
 
     let package = parser::parse(&svg).expect("failed to parse SVG XML");
     let document = package.as_document();
