@@ -11,6 +11,12 @@ mod parser;
 mod participant;
 mod rendering;
 
+/// Parses the supplied diagram string into SVG string.
+///
+/// # Arguments
+///
+/// * `content` - A string representing the diagram in the diagram DSL
+/// * `show_debug_lines` - A boolean to enable debug lines for the layout in the SVG
 pub fn parse(content: &str, show_debug_lines: bool) -> Result<String, error::Error> {
     let diagram = parser::create_diagram(content)?;
     Ok(rendering::render(&diagram, show_debug_lines))

@@ -8,7 +8,11 @@ use crate::rendering::renderer::{LineStyle, Renderer};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/// Trait for events that the diagram's timeline consists of.
+/// Timeline events know how to draw themselves on a renderer and how much space needs
+/// to be reserved for them (both vertically and horizontally) in the diagram's layout grid.
 pub trait TimelineEvent {
+    /// Draws the event on the renderer
     fn draw(
         &self,
         diagram: &SequenceDiagram,
@@ -16,10 +20,19 @@ pub trait TimelineEvent {
         grid: &GridSize,
         row: usize,
     );
+
+    /// Returns the width this event requires to be drawn correctly.
+    /// This is used in the layout code to calculate the grid size.
+    /// If the event does not have an opinion on the layout, it returns None.
     fn reserved_width(&self) -> Option<ReservedWidth> {
         None
     }
+
+    /// The height of the event in the diagram, used to determine the row heights.
     fn height(&self) -> u32;
+
+    /// The column indices the event relates to. It's used in groups to determine which
+    /// columns the group needs to wrap.
     fn col_range(&self) -> Option<(usize, usize)>;
 }
 
@@ -36,6 +49,7 @@ impl SequenceDiagram {
         }
     }
 
+    /// Returns the list of all participants in the sequence diagram.
     pub fn get_participants(&self) -> &Vec<Rc<RefCell<Participant>>> {
         &self.participants
     }
@@ -44,6 +58,8 @@ impl SequenceDiagram {
         &self.timeline
     }
 
+    /// Returns the participant for the supplied participant ID or returns None if
+    /// there isn't a participant with the ID.
     pub fn find_participant_by_name(&self, id: &str) -> Option<Rc<RefCell<Participant>>> {
         self.participants
             .iter()

@@ -149,10 +149,14 @@ impl TimelineEvent for GroupEnded {
     }
 
     fn reserved_width(&self) -> Option<ReservedWidth> {
+        // The end and start event contribute to the layout the same way, so it's redundant to
+        // reserve some width from both.
         None
     }
 
     fn height(&self) -> u32 {
+        // Every row has some margin, which is enough space to draw the group's bottom line.
+        // Therefore, there is no need to request any extra row height.
         0
     }
 
