@@ -34,7 +34,10 @@ impl TimelineEvent for MessageSent {
 
     fn reserved_width(&self) -> Option<ReservedWidth> {
         let from_idx = self.message.from.borrow().get_idx();
-        let to_idx = self.message.to.borrow().get_idx();
+        let mut to_idx = self.message.to.borrow().get_idx();
+        if from_idx == to_idx {
+            to_idx = to_idx + 1;
+        }
 
         // The width of the message depends on its label plus some constant margin
         let width = string_width(&self.message.label, MESSAGE_FONT_SIZE) + 40;
