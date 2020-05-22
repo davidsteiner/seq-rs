@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::diagram::SequenceDiagram;
 use crate::error::Error;
 use crate::group::{AltGroup, Group, SimpleGroup};
@@ -6,6 +7,7 @@ use crate::note::NoteOrientation;
 use crate::participant::{Participant, ParticipantKind};
 use crate::rendering::renderer::LineStyle;
 
+use crate::parser::AstNode::ParticipantDefinition;
 use pest::iterators::Pair;
 use pest::Parser;
 use std::cell::RefCell;
@@ -17,7 +19,11 @@ use std::rc::Rc;
 pub struct PParser;
 
 enum AstNode {
-    Participant(Participant),
+    ParticipantDefinition {
+        name: String,
+        label: String,
+        kind: ParticipantKind,
+    },
     Message {
         from: String,
         to: String,
@@ -46,15 +52,21 @@ enum Direction {
     Right,
 }
 
-pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
-    let mut diagram = SequenceDiagram::new();
+pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, Error> {
+    let mut diagram = SequenceDiagram::new(config);
     let mut active_groups: VecDeque<Rc<RefCell<Group>>> = VecDeque::new();
     let mut last_message: Option<(usize, Message)> = None;
     let ast = parse(source)?;
 
     for node in ast {
         match node {
-            AstNode::Participant(p) => {
+            AstNode::ParticipantDefinition { name, label, kind } => {
+                let p = Participant::with_label(
+                    name,
+                    kind,
+                    label,
+                    diagram.get_config().participant_config,
+                );
                 diagram.add_participant(p);
             }
             AstNode::Message {
@@ -76,11 +88,15 @@ pub fn create_diagram(source: &str) -> Result<SequenceDiagram, Error> {
             }
             AstNode::GroupStart(group_type, header) => {
                 let timeline_pos = diagram.get_timeline().len();
+                let config = diagram.get_config().group_config;
                 let group = match group_type.as_str() {
-                    "group" => {
-                        Group::SimpleGroup(SimpleGroup::new(timeline_pos, header, "".to_string()))
-                    }
-                    "alt" => Group::AltGroup(AltGroup::new(timeline_pos, header)),
+                    "group" => Group::SimpleGroup(SimpleGroup::new(
+                        timeline_pos,
+                        header,
+                        "".to_string(),
+                        config,
+                    )),
+                    "alt" => Group::AltGroup(AltGroup::new(timeline_pos, header, config)),
                     _ => return Err(Error::new("Unexpected group type".to_string())),
                 };
                 let rc_group = Rc::new(RefCell::new(group));
@@ -163,7 +179,7 @@ fn parse(source: &str) -> Result<Vec<AstNode>, Error> {
 
 fn build_ast_from_stmt(pair: Pair<Rule>) -> Result<AstNode, Error> {
     Ok(match pair.as_rule() {
-        Rule::participant => AstNode::Participant(parse_participant(pair)),
+        Rule::participant => parse_participant(pair),
         Rule::message => parse_message(pair)?,
         Rule::group_start => parse_group_start(pair),
         Rule::group_end => AstNode::GroupEnd,
@@ -203,7 +219,7 @@ fn parse_deactivate(pair: Pair<Rule>) -> AstNode {
     AstNode::Deactivate(label)
 }
 
-fn parse_participant(pair: Pair<Rule>) -> Participant {
+fn parse_participant(pair: Pair<Rule>) -> AstNode {
     let mut pair = pair.into_inner();
     let kind = match pair.next().unwrap().as_str() {
         "participant" => ParticipantKind::Default,
@@ -230,7 +246,11 @@ fn parse_participant(pair: Pair<Rule>) -> Participant {
         None => label,
     };
 
-    Participant::with_label(String::from(name), kind, String::from(label))
+    ParticipantDefinition {
+        name: String::from(name),
+        label: String::from(label),
+        kind,
+    }
 }
 
 fn parse_message(pair: Pair<Rule>) -> Result<AstNode, Error> {

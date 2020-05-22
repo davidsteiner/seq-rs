@@ -5,12 +5,12 @@ use crate::rendering::renderer::{Renderer, DARK_GREY, LIGHT_GREY};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-static FONT_SIZE: u8 = 24;
 static PARTICIPANT_MARGIN: u32 = 10;
 
 pub struct Note {
     pub orientation: NoteOrientation,
     pub label: String,
+    pub config: NoteConfig,
 }
 
 pub enum NoteOrientation {
@@ -21,7 +21,7 @@ pub enum NoteOrientation {
 impl Note {
     fn width(&self) -> u32 {
         let longest = &self.label.split("\\n").max_by_key(|t| t.len()).unwrap();
-        string_width(longest, FONT_SIZE)
+        string_width(longest, self.config.font_size)
     }
 }
 
@@ -51,7 +51,7 @@ impl TimelineEvent for Note {
             LIGHT_GREY,
             DARK_GREY,
         );
-        renderer.render_text(&self.label, x, y, FONT_SIZE, "left");
+        renderer.render_text(&self.label, x, y, self.config.font_size, "left");
     }
 
     fn reserved_width(&self) -> Option<ReservedWidth> {
@@ -67,11 +67,17 @@ impl TimelineEvent for Note {
     }
 
     fn height(&self) -> u32 {
-        (FONT_SIZE as usize * self.label.split("\\n").count()) as u32 * 11 / 10
-            + FONT_SIZE as u32 / 3
+        let font_size = self.config.font_size;
+        (font_size as usize * self.label.split("\\n").count()) as u32 * 11 / 10
+            + font_size as u32 / 3
     }
 
     fn col_range(&self) -> Option<(usize, usize)> {
         None
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct NoteConfig {
+    pub font_size: u32,
 }

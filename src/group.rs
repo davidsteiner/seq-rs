@@ -7,27 +7,28 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Case {
     pub row: usize,
     pub label: String,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct SimpleGroup {
     start: usize,
     end: usize,
     label: String,
     header: String,
+    config: GroupConfig,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct AltGroup {
     group: SimpleGroup,
     cases: Vec<Case>,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub enum Group {
     SimpleGroup(SimpleGroup),
     AltGroup(AltGroup),
@@ -43,12 +44,13 @@ impl Group {
 }
 
 impl SimpleGroup {
-    pub fn new(start: usize, label: String, header: String) -> SimpleGroup {
+    pub fn new(start: usize, label: String, header: String, config: GroupConfig) -> SimpleGroup {
         SimpleGroup {
             start,
             end: start,
             label,
             header,
+            config,
         }
     }
 
@@ -74,12 +76,13 @@ impl SimpleGroup {
 }
 
 impl AltGroup {
-    pub fn new(start: usize, header: String) -> AltGroup {
+    pub fn new(start: usize, header: String, config: GroupConfig) -> AltGroup {
         let group = SimpleGroup {
             start,
             end: 0,
             label: "alt".to_string(),
             header,
+            config,
         };
         AltGroup {
             group,
@@ -198,6 +201,7 @@ pub fn draw_group(
         Group::AltGroup(alt_group) => alt_group.get_simple_group(),
         Group::SimpleGroup(ref group) => group,
     };
+    let font_size = simple_group.config.font_size;
     let y = grid_size.get_row_top(simple_group.get_start());
     let x_pos = calculate_x_pos(simple_group, diagram, grid_size);
     let x = x_pos.0 - 10;
@@ -214,7 +218,7 @@ pub fn draw_group(
     renderer.render_rect(x, y, width, height, rect_params);
 
     // Render the label in the top left corner
-    let label_width = string_width(simple_group.get_label(), 20) + 20;
+    let label_width = string_width(simple_group.get_label(), font_size) + 20;
     let rect_params = RectParams {
         fill: MEDIUM_PURPLE,
         fill_opacity: 1.0,
@@ -223,13 +227,13 @@ pub fn draw_group(
         r: 5,
     };
     renderer.render_rect(x, y, label_width, 35, rect_params);
-    renderer.render_text(simple_group.get_label(), x_pos.0, y, 20, "left");
+    renderer.render_text(simple_group.get_label(), x_pos.0, y, font_size, "left");
 
     // Render header to the right of the label
     let header = simple_group.get_header();
     if !header.is_empty() {
         let header = format!("[{}]", header);
-        renderer.render_text(&header, x + label_width + 10, y, 20, "left");
+        renderer.render_text(&header, x + label_width + 10, y, font_size, "left");
     }
 
     // If this is an alt group, also render the else blocks
@@ -244,7 +248,7 @@ pub fn draw_group(
                 MEDIUM_PURPLE,
                 None,
             );
-            renderer.render_text(&format!("[{}]", &case.label), x_pos.0, y, 20, "left");
+            renderer.render_text(&format!("[{}]", &case.label), x_pos.0, y, font_size, "left");
         }
     }
 }
@@ -268,4 +272,9 @@ fn calculate_x_pos(
     let max_col = grid_size.cols[cols.iter().max().unwrap() + 1];
 
     (min_col, max_col)
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct GroupConfig {
+    pub font_size: u32,
 }

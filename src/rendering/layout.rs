@@ -98,8 +98,8 @@ pub fn calculate_grid(diagram: &SequenceDiagram) -> GridSize {
     grid
 }
 
-pub fn string_width(s: &str, font_size: u8) -> u32 {
-    s.len() as u32 * font_size as u32 * 9 / 14
+pub fn string_width(s: &str, font_size: u32) -> u32 {
+    s.len() as u32 * font_size * 9 / 14
 }
 
 fn calculate_cols(diagram: &SequenceDiagram) -> Vec<u32> {

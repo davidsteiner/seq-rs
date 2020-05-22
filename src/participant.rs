@@ -12,7 +12,6 @@ pub const PARTICIPANT_SPACE: u32 = 150;
 pub const ACTOR_HEIGHT: u32 = 160;
 pub const ACTIVATION_WIDTH: u32 = 10;
 pub const ACTIVATION_NESTING_OFFSET: u32 = 3;
-const FONT_SIZE: u8 = 35;
 
 #[derive(Debug, Clone)]
 pub struct Participant {
@@ -21,21 +20,28 @@ pub struct Participant {
     kind: ParticipantKind,
     pub idx: usize,
     activations: Vec<Activation>,
+    config: ParticipantConfig,
 }
 
 impl Participant {
-    pub fn new(name: String, kind: ParticipantKind) -> Participant {
+    pub fn new(name: String, kind: ParticipantKind, config: ParticipantConfig) -> Participant {
         let label = name.clone();
-        Participant::with_label(name, kind, label)
+        Participant::with_label(name, kind, label, config)
     }
 
-    pub fn with_label(name: String, kind: ParticipantKind, label: String) -> Participant {
+    pub fn with_label(
+        name: String,
+        kind: ParticipantKind,
+        label: String,
+        config: ParticipantConfig,
+    ) -> Participant {
         Participant {
             name,
             label,
             kind,
             idx: 0,
             activations: vec![],
+            config,
         }
     }
 
@@ -225,7 +231,7 @@ pub fn get_participant_width(participant: &Participant) -> u32 {
 }
 
 fn get_rendered_width(participant: &Participant) -> u32 {
-    string_width(participant.get_label(), FONT_SIZE) + 50
+    string_width(participant.get_label(), participant.config.font_size) + 50
 }
 
 pub fn draw_participant(participant: &Participant, renderer: &mut dyn Renderer, x: u32, y: u32) {
@@ -252,7 +258,7 @@ fn draw_default_participant(
         &participant.get_label(),
         x,
         y + PARTICIPANT_HEIGHT / 3,
-        FONT_SIZE,
+        participant.config.font_size,
         "middle",
     );
 }
@@ -263,7 +269,7 @@ pub fn draw_actor(renderer: &mut dyn Renderer, participant: &Participant, x: u32
         &participant.get_label(),
         x,
         y + ACTOR_HEIGHT - 45,
-        FONT_SIZE,
+        participant.config.font_size,
         "middle",
     );
 }
@@ -274,7 +280,12 @@ fn draw_database(renderer: &mut dyn Renderer, participant: &Participant, x: u32,
         &participant.get_label(),
         x,
         y + ACTOR_HEIGHT - 45,
-        FONT_SIZE,
+        participant.config.font_size,
         "middle",
     );
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct ParticipantConfig {
+    pub font_size: u32,
 }

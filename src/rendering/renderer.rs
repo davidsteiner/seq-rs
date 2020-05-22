@@ -23,7 +23,7 @@ pub enum LineStyle {
 pub trait Renderer {
     fn render_rect(&mut self, x: u32, y: u32, width: u32, height: u32, params: RectParams);
     fn render_circle(&mut self, center: Point2<u32>, r: u32, stroke_colour: &str);
-    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str);
+    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u32, text_anchor: &str);
     fn render_arrow(&mut self, p1: Point2<u32>, p2: Point2<u32>, dash: u8);
     fn render_line(
         &mut self,
@@ -109,7 +109,7 @@ impl Renderer for SVGRenderer {
         self.add(circle);
     }
 
-    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u8, text_anchor: &str) {
+    fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u32, text_anchor: &str) {
         let lines = text.split("\\n");
         let mut text = Text::new()
             .set("x", x)

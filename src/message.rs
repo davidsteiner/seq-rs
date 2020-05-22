@@ -6,19 +6,19 @@ use nalgebra::Point2;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Message {
     pub from: Rc<RefCell<Participant>>,
     pub to: Rc<RefCell<Participant>>,
     pub label: String,
     pub style: LineStyle,
+    pub config: MessageConfig,
 }
 
 pub struct MessageSent {
     pub(crate) message: Message,
 }
 
-const MESSAGE_FONT_SIZE: u8 = 24;
 pub const ARROW_DISTANCE_FROM_BOTTOM: u32 = 10;
 
 impl TimelineEvent for MessageSent {
@@ -36,11 +36,11 @@ impl TimelineEvent for MessageSent {
         let from_idx = self.message.from.borrow().get_idx();
         let mut to_idx = self.message.to.borrow().get_idx();
         if from_idx == to_idx {
-            to_idx = to_idx + 1;
+            to_idx += 1;
         }
 
         // The width of the message depends on its label plus some constant margin
-        let width = string_width(&self.message.label, MESSAGE_FONT_SIZE) + 40;
+        let width = string_width(&self.message.label, self.message.config.font_size) + 40;
         Some(ReservedWidth::new(from_idx + 1, to_idx + 1, width))
     }
 
@@ -115,8 +115,8 @@ fn draw_regular_message(
     renderer.render_text(
         &msg.label,
         text_x,
-        y - MESSAGE_FONT_SIZE as u32 - 5,
-        MESSAGE_FONT_SIZE,
+        y - msg.config.font_size - 5,
+        msg.config.font_size,
         "middle",
     );
 }
@@ -156,7 +156,12 @@ fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, gri
         &msg.label,
         x_offset + 10,
         y_start,
-        MESSAGE_FONT_SIZE,
+        msg.config.font_size,
         "start",
     );
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct MessageConfig {
+    pub font_size: u32,
 }

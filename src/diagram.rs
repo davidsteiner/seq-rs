@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::error::Error;
 use crate::group::{AltElse, Group, GroupEnded, GroupStarted};
 use crate::message::{Message, MessageSent};
@@ -39,14 +40,20 @@ pub trait TimelineEvent {
 pub struct SequenceDiagram {
     participants: Vec<Rc<RefCell<Participant>>>,
     timeline: Vec<Vec<Box<dyn TimelineEvent>>>,
+    config: Config,
 }
 
 impl SequenceDiagram {
-    pub fn new() -> SequenceDiagram {
+    pub fn new(config: Config) -> SequenceDiagram {
         SequenceDiagram {
             participants: vec![],
             timeline: vec![vec![]],
+            config,
         }
+    }
+
+    pub fn get_config(&self) -> &Config {
+        &self.config
     }
 
     /// Returns the list of all participants in the sequence diagram.
@@ -79,7 +86,11 @@ impl SequenceDiagram {
 
     fn get_or_create_participant(&mut self, name: &str) -> Rc<RefCell<Participant>> {
         self.find_participant_by_name(&name).unwrap_or_else(|| {
-            let p = Participant::new(name.to_string(), ParticipantKind::Default);
+            let p = Participant::new(
+                name.to_string(),
+                ParticipantKind::Default,
+                self.config.participant_config,
+            );
             self.add_participant(p)
         })
     }
@@ -99,6 +110,7 @@ impl SequenceDiagram {
             to: to_participant,
             label,
             style,
+            config: self.config.message_config,
         };
         self.timeline.push(vec![Box::new(MessageSent {
             message: message.clone(),
@@ -148,7 +160,11 @@ impl SequenceDiagram {
     }
 
     pub fn add_note(&mut self, label: String, orientation: NoteOrientation, new_row: bool) {
-        let event = Box::new(Note { label, orientation });
+        let event = Box::new(Note {
+            label,
+            orientation,
+            config: self.config.note_config,
+        });
         if new_row {
             self.timeline.push(vec![event]);
         } else {
