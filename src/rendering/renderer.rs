@@ -195,7 +195,7 @@ impl Renderer for SVGRenderer {
         let path = Path::new()
             .set("d", d)
             .set("stroke", MEDIUM_BLUE)
-            .set("stroke-width", 5)
+            .set("stroke-width", 3)
             .set("fill", LIGHT_BLUE);
         self.add(path);
     }
@@ -227,7 +227,7 @@ impl Renderer for SVGRenderer {
             ), // right arm
         ];
         for line in lines {
-            self.render_line(line.0, line.1, 5, 0, MEDIUM_BLUE, None);
+            self.render_line(line.0, line.1, 2, 0, MEDIUM_BLUE, None);
         }
         self.render_circle(
             Point2::new(x, y - height / 6 * 5),

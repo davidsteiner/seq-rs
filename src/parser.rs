@@ -117,7 +117,7 @@ pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, E
                         }
                     }
                     diagram.add_alt_case(rc_group.clone());
-                },
+                }
                 None => return Err(Error::new("else without active alt group".to_string())),
             },
             AstNode::GroupEnd => match active_groups.pop_back() {

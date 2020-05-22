@@ -7,9 +7,7 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-pub const PARTICIPANT_HEIGHT: u32 = 100;
-pub const PARTICIPANT_SPACE: u32 = 150;
-pub const ACTOR_HEIGHT: u32 = 160;
+pub const PARTICIPANT_SPACE: u32 = 20;
 pub const ACTIVATION_WIDTH: u32 = 10;
 pub const ACTIVATION_NESTING_OFFSET: u32 = 3;
 
@@ -201,6 +199,7 @@ impl TimelineEvent for ParticipantCreated {
             renderer,
             center_x,
             grid.get_row_bottom(row) - self.height(),
+            self.height(),
         );
 
         // render participant at the bottom
@@ -209,14 +208,16 @@ impl TimelineEvent for ParticipantCreated {
             renderer,
             center_x,
             grid.get_row_top(grid.num_rows() - 1),
+            self.height(),
         );
     }
 
     fn height(&self) -> u32 {
+        let font_size = self.participant.borrow().config.font_size;
         match self.participant.borrow().get_kind() {
-            ParticipantKind::Default => PARTICIPANT_HEIGHT,
-            ParticipantKind::Actor => ACTOR_HEIGHT,
-            ParticipantKind::Database => ACTOR_HEIGHT,
+            ParticipantKind::Default => font_size * 2,
+            ParticipantKind::Actor => font_size * 4,
+            ParticipantKind::Database => font_size * 3,
         }
     }
 
@@ -234,11 +235,17 @@ fn get_rendered_width(participant: &Participant) -> u32 {
     string_width(participant.get_label(), participant.config.font_size) + 50
 }
 
-pub fn draw_participant(participant: &Participant, renderer: &mut dyn Renderer, x: u32, y: u32) {
+pub fn draw_participant(
+    participant: &Participant,
+    renderer: &mut dyn Renderer,
+    x: u32,
+    y: u32,
+    height: u32,
+) {
     match participant.get_kind() {
-        ParticipantKind::Default => draw_default_participant(renderer, participant, x, y),
-        ParticipantKind::Actor => draw_actor(renderer, participant, x, y),
-        ParticipantKind::Database => draw_database(renderer, participant, x, y),
+        ParticipantKind::Default => draw_default_participant(renderer, participant, x, y, height),
+        ParticipantKind::Actor => draw_actor(renderer, participant, x, y, height),
+        ParticipantKind::Database => draw_database(renderer, participant, x, y, height),
     }
 }
 
@@ -247,40 +254,59 @@ fn draw_default_participant(
     participant: &Participant,
     x: u32,
     y: u32,
+    height: u32,
 ) {
     let width = get_rendered_width(participant);
+    let font_size = participant.config.font_size;
     let rect_params = RectParams {
-        r: 10,
+        r: font_size / 4,
         ..Default::default()
     };
-    renderer.render_rect(x - width / 2, y, width, PARTICIPANT_HEIGHT, rect_params);
+    renderer.render_rect(x - width / 2, y, width, height, rect_params);
     renderer.render_text(
         &participant.get_label(),
         x,
-        y + PARTICIPANT_HEIGHT / 3,
+        y + (height - font_size) / 2,
+        font_size,
+        "middle",
+    );
+}
+
+pub fn draw_actor(
+    renderer: &mut dyn Renderer,
+    participant: &Participant,
+    x: u32,
+    y: u32,
+    height: u32,
+) {
+    let stickman_height = height * 2 / 3;
+    let stickman_width = stickman_height * 2 / 3;
+    renderer.render_stickman(x, y + stickman_height, stickman_width, stickman_height);
+    renderer.render_text(
+        &participant.get_label(),
+        x,
+        y + stickman_height,
         participant.config.font_size,
         "middle",
     );
 }
 
-pub fn draw_actor(renderer: &mut dyn Renderer, participant: &Participant, x: u32, y: u32) {
-    renderer.render_stickman(x, y + ACTOR_HEIGHT - 45, 70, ACTOR_HEIGHT - 70);
-    renderer.render_text(
-        &participant.get_label(),
-        x,
-        y + ACTOR_HEIGHT - 45,
-        participant.config.font_size,
-        "middle",
-    );
-}
+fn draw_database(
+    renderer: &mut dyn Renderer,
+    participant: &Participant,
+    x: u32,
+    y: u32,
+    height: u32,
+) {
+    let font_size = participant.config.font_size;
+    let width = string_width(&participant.get_label(), font_size);
 
-fn draw_database(renderer: &mut dyn Renderer, participant: &Participant, x: u32, y: u32) {
-    renderer.render_db_icon(x, y + ACTOR_HEIGHT - 45, 70, ACTOR_HEIGHT - 70);
+    renderer.render_db_icon(x, y + height, width * 3 / 2, height);
     renderer.render_text(
         &participant.get_label(),
         x,
-        y + ACTOR_HEIGHT - 45,
-        participant.config.font_size,
+        y + height - font_size * 11 / 6,
+        font_size,
         "middle",
     );
 }
