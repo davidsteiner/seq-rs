@@ -155,8 +155,8 @@ impl SequenceDiagram {
         self.timeline.push(vec![Box::new(GroupEnded)]);
     }
 
-    pub fn add_alt_case(&mut self) {
-        self.timeline.push(vec![Box::new(AltElse)]);
+    pub fn add_alt_case(&mut self, group: Rc<RefCell<Group>>) {
+        self.timeline.push(vec![Box::new(AltElse { group })]);
     }
 
     pub fn add_note(&mut self, label: String, orientation: NoteOrientation, new_row: bool) {

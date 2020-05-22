@@ -11,12 +11,14 @@ pub struct Config {
     pub participant_config: ParticipantConfig,
 }
 
+static DEFAULT_FONT_SIZE: u32 = 12;
+
 impl Default for Config {
     fn default() -> Self {
         Config {
-            group_config: GroupConfig { font_size: 20 },
-            message_config: MessageConfig { font_size: 24 },
-            note_config: NoteConfig { font_size: 24 },
+            group_config: GroupConfig { font_size: DEFAULT_FONT_SIZE },
+            message_config: MessageConfig { font_size: DEFAULT_FONT_SIZE },
+            note_config: NoteConfig { font_size: DEFAULT_FONT_SIZE },
             participant_config: ParticipantConfig { font_size: 35 },
         }
     }

@@ -41,6 +41,13 @@ impl Group {
             Group::AltGroup(g) => g.end(end),
         }
     }
+
+    fn config(&self) -> GroupConfig {
+        match self {
+            Group::SimpleGroup(g) => g.config,
+            Group::AltGroup(g) => g.get_simple_group().config,
+        }
+    }
 }
 
 impl SimpleGroup {
@@ -115,7 +122,9 @@ pub struct GroupStarted {
 
 pub struct GroupEnded;
 
-pub struct AltElse;
+pub struct AltElse {
+    pub(crate) group: Rc<RefCell<Group>>,
+}
 
 impl TimelineEvent for GroupStarted {
     fn draw(
@@ -133,7 +142,7 @@ impl TimelineEvent for GroupStarted {
     }
 
     fn height(&self) -> u32 {
-        40
+        self.group.borrow().config().font_size * 5 / 4
     }
 
     fn col_range(&self) -> Option<(usize, usize)> {
@@ -183,7 +192,7 @@ impl TimelineEvent for AltElse {
     }
 
     fn height(&self) -> u32 {
-        25
+        self.group.borrow().config().font_size * 5 / 4
     }
 
     fn col_range(&self) -> Option<(usize, usize)> {
@@ -226,7 +235,7 @@ pub fn draw_group(
         stroke_width: 2,
         r: 5,
     };
-    renderer.render_rect(x, y, label_width, 35, rect_params);
+    renderer.render_rect(x, y, label_width, font_size * 13 / 10, rect_params);
     renderer.render_text(simple_group.get_label(), x_pos.0, y, font_size, "left");
 
     // Render header to the right of the label

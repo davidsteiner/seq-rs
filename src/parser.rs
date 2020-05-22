@@ -104,17 +104,19 @@ pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, E
                 diagram.start_group(rc_group);
             }
             AstNode::AltElse(label) => match active_groups.back_mut() {
-                Some(rc_group) => match *rc_group.borrow_mut() {
-                    Group::AltGroup(ref mut group) => {
-                        let row = diagram.get_timeline().len();
-                        group.add_case(label, row);
-                        diagram.add_alt_case();
+                Some(rc_group) => {
+                    match *rc_group.borrow_mut() {
+                        Group::AltGroup(ref mut group) => {
+                            let row = diagram.get_timeline().len();
+                            group.add_case(label, row);
+                        }
+                        _ => {
+                            return Err(Error::new(
+                                "else when active group is not an 'alt' group".to_string(),
+                            ))
+                        }
                     }
-                    _ => {
-                        return Err(Error::new(
-                            "else when active group is not an 'alt' group".to_string(),
-                        ))
-                    }
+                    diagram.add_alt_case(rc_group.clone());
                 },
                 None => return Err(Error::new("else without active alt group".to_string())),
             },

@@ -3,7 +3,7 @@ use crate::participant::get_participant_width;
 use itertools::Itertools;
 use std::cmp::Ordering;
 
-static ROW_MARGIN: u32 = 20;
+static ROW_MARGIN: u32 = 8;
 
 #[derive(Clone, Debug)]
 pub struct GridSize {
