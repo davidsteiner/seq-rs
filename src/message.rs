@@ -50,7 +50,7 @@ impl TimelineEvent for MessageSent {
                 // Regular messages with no label don't need as much vertical space
                 20
             } else {
-                40
+                20 + self.message.config.font_size
             }
         } else {
             55
