@@ -101,7 +101,7 @@ fn draw_regular_message(
     let dest_x = (grid_size.get_col_center(dest_idx) as i32 + dest_offset) as u32;
     let dash = match &msg.style {
         LineStyle::Plain => 0,
-        LineStyle::Dashed => 10,
+        LineStyle::Dashed => 5,
     };
 
     renderer.render_arrow(Point2::new(src_x, y), Point2::new(dest_x, y), dash);
@@ -131,7 +131,7 @@ fn draw_self_message(renderer: &mut dyn Renderer, msg: &Message, row: usize, gri
 
     let dash = match &msg.style {
         LineStyle::Plain => 0,
-        LineStyle::Dashed => 10,
+        LineStyle::Dashed => 5,
     };
 
     renderer.render_line(

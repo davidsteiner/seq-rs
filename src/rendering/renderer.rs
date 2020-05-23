@@ -53,14 +53,14 @@ pub struct SVGRenderer {
 
 impl SVGRenderer {
     pub fn new(width: u32, height: u32) -> SVGRenderer {
-        let path = Path::new().set("d", "M0,0 L0,12 L18,6 z");
+        let path = Path::new().set("d", "M0,0 L0,8 L9,4 z");
         let marker = Marker::new()
             .set("id", ARROW_HEAD_ID)
-            .set("markerWidth", 20)
-            .set("markerHeight", 20)
+            .set("markerWidth", 10)
+            .set("markerHeight", 10)
             .set("markerUnits", "userSpaceOnUse")
-            .set("refX", 18)
-            .set("refY", 6)
+            .set("refX", 9)
+            .set("refY", 4)
             .set("orient", "auto")
             .add(path);
 
@@ -249,7 +249,7 @@ impl Renderer for SVGRenderer {
         let y = y as i32;
         let width = width as i32;
         let height = height as i32;
-        let corner_size = 15;
+        let corner_size = 8;
 
         let d = format!(
             "M {} {} h {} v {} h {} v {} z v {} h {}",

@@ -28,7 +28,6 @@ activation_modifier = { "++" | "--" }
 group_start = { group_type ~ label }
 alt_else = { "else" ~ label }
 group_type = { "group" | "alt" }
-
 group_end = { "end" }
 
 activate = { "activate" ~ ident }
@@ -36,6 +35,9 @@ deactivate = { "deactivate" ~ ident }
 
 message_note = { "note" ~ note_orientation ~ note_label }
 note_label = { ":" ~ label }
-note_orientation = { "left" | "right" }
+note_orientation = { note_left | note_right | note_over }
+note_left = { "left" }
+note_right = { "right" }
+note_over = { "over" ~ (ident ~ ",")* ~ ident }
 
 WHITESPACE = _{ " " | "\t" }

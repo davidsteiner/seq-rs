@@ -36,7 +36,7 @@ enum AstNode {
     GroupEnd,
     Activate(String),
     Deactivate(String),
-    MessageNote {
+    Note {
         label: String,
         direction: Direction,
     },
@@ -50,6 +50,7 @@ enum ActivationModifier {
 enum Direction {
     Left,
     Right,
+    Over(Vec<String>),
 }
 
 pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, Error> {
@@ -130,30 +131,38 @@ pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, E
             AstNode::Deactivate(participant_name) => {
                 diagram.deactivate(&participant_name)?;
             }
-            AstNode::MessageNote { label, direction } => match last_message.as_ref() {
-                Some((_, msg)) => {
-                    let orientation = match direction {
-                        Direction::Left => {
+            AstNode::Note { label, direction } => match direction {
+                Direction::Left | Direction::Right => match last_message.as_ref() {
+                    Some((_, msg)) => {
+                        let orientation = if let Direction::Left = direction {
                             if msg.from < msg.to {
                                 NoteOrientation::LeftOf(msg.from.clone())
                             } else {
                                 NoteOrientation::LeftOf(msg.to.clone())
                             }
-                        }
-                        Direction::Right => {
-                            if msg.from < msg.to {
-                                NoteOrientation::RightOf(msg.to.clone())
-                            } else {
-                                NoteOrientation::RightOf(msg.from.clone())
-                            }
-                        }
+                        } else if msg.from < msg.to {
+                            NoteOrientation::RightOf(msg.to.clone())
+                        } else {
+                            NoteOrientation::RightOf(msg.from.clone())
+                        };
+                        diagram.add_note(label, orientation, false);
+                    }
+                    None => {
+                        return Err(Error::new(
+                            "Adding note for message before defining any messages".to_string(),
+                        ))
+                    }
+                },
+                Direction::Over(participant_names) => {
+                    let to_participant = |name: String| {
+                        diagram
+                            .find_participant_by_name(&name)
+                            .ok_or_else(|| Error::new(format!("No participant {} for note", name)))
                     };
-                    diagram.add_note(label, orientation, false);
-                }
-                None => {
-                    return Err(Error::new(
-                        "Adding note for message before defining any messages".to_string(),
-                    ))
+                    let participants: Result<Vec<Rc<RefCell<Participant>>>, Error> =
+                        participant_names.into_iter().map(to_participant).collect();
+                    let orientation = NoteOrientation::Over(participants?);
+                    diagram.add_note(label, orientation, true);
                 }
             },
         }
@@ -309,20 +318,23 @@ fn parse_message(pair: Pair<Rule>) -> Result<AstNode, Error> {
 
 fn parse_message_note(pair: Pair<Rule>) -> Result<AstNode, Error> {
     let mut pairs = pair.into_inner();
-    let direction = match pairs.next().unwrap().as_str() {
-        "left" => Direction::Left,
-        "right" => Direction::Right,
-        unexpected => {
-            return Err(Error::new(format!(
-                "Unexpected note orientation: {}",
-                unexpected
-            )))
+    let direction_pair = pairs.next().unwrap().into_inner().next().unwrap();
+    let direction = match direction_pair.as_rule() {
+        Rule::note_left => Direction::Left,
+        Rule::note_right => Direction::Right,
+        Rule::note_over => {
+            let participants = direction_pair
+                .into_inner()
+                .map(|pair| pair.as_str().to_string())
+                .collect();
+            Direction::Over(participants)
         }
+        _ => return Err(Error::new("Unexpected note orientation".to_string())),
     };
 
     let label = pairs.next().unwrap().into_inner().next().unwrap().as_str();
 
-    Ok(AstNode::MessageNote {
+    Ok(AstNode::Note {
         label: label.to_string(),
         direction,
     })

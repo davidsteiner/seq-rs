@@ -16,6 +16,7 @@ pub struct Note {
 pub enum NoteOrientation {
     LeftOf(Rc<RefCell<Participant>>),
     RightOf(Rc<RefCell<Participant>>),
+    Over(Vec<Rc<RefCell<Participant>>>),
 }
 
 impl Note {
@@ -40,6 +41,19 @@ impl TimelineEvent for Note {
             NoteOrientation::RightOf(p) => {
                 grid.get_col_center(p.borrow().get_idx()) + PARTICIPANT_MARGIN
             }
+            NoteOrientation::Over(participants) => {
+                let left_participant = participants.iter().min().unwrap();
+                let left_idx = left_participant.borrow().idx;
+                let right_participant = participants.iter().max().unwrap();
+                let right_idx = right_participant.borrow().idx;
+
+                let center = (grid.get_col_center(right_idx) + grid.get_col_center(left_idx)) / 2;
+                let unadjusted = (center as i32 - (self.width() / 2) as i32)
+                    .max(0)
+                    .min((grid.width() - self.width()) as i32)
+                    as u32;
+                unadjusted + PARTICIPANT_MARGIN / 2
+            }
         };
         let y = grid.get_row_top(row);
         let box_x = x - PARTICIPANT_MARGIN / 2;
@@ -56,8 +70,9 @@ impl TimelineEvent for Note {
 
     fn reserved_width(&self) -> Option<ReservedWidth> {
         let cols = match &self.orientation {
-            NoteOrientation::LeftOf(p) => (p.borrow().get_idx(), p.borrow().get_idx() + 1),
-            NoteOrientation::RightOf(p) => (p.borrow().get_idx() + 1, p.borrow().get_idx() + 2),
+            NoteOrientation::LeftOf(p) => (0, p.borrow().get_idx() + 1),
+            NoteOrientation::RightOf(p) => (p.borrow().get_idx() + 1, usize::max_value()),
+            NoteOrientation::Over(_) => (0, usize::max_value()),
         };
         Some(ReservedWidth::new(
             cols.0,
