@@ -6,6 +6,7 @@ use crate::note::{Note, NoteOrientation};
 use crate::participant::{Participant, ParticipantCreated, ParticipantKind};
 use crate::rendering::layout::{GridSize, ReservedWidth};
 use crate::rendering::renderer::{LineStyle, Renderer};
+use crate::separator::Separator;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -170,5 +171,10 @@ impl SequenceDiagram {
         } else {
             self.timeline.last_mut().unwrap().push(event);
         }
+    }
+
+    pub fn add_separator(&mut self, label: String) {
+        let separator = Separator::new(label, self.config.separator_config);
+        self.timeline.push(vec![Box::new(separator)]);
     }
 }

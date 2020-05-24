@@ -11,6 +11,7 @@ mod note;
 mod parser;
 mod participant;
 mod rendering;
+mod separator;
 
 /// Parses the supplied diagram string into SVG string.
 ///

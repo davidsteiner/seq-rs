@@ -40,6 +40,7 @@ enum AstNode {
         label: String,
         direction: Direction,
     },
+    Separator(String),
 }
 
 enum ActivationModifier {
@@ -165,6 +166,9 @@ pub fn create_diagram(source: &str, config: Config) -> Result<SequenceDiagram, E
                     diagram.add_note(label, orientation, true);
                 }
             },
+            AstNode::Separator(label) => {
+                diagram.add_separator(label);
+            }
         }
     }
 
@@ -198,6 +202,7 @@ fn build_ast_from_stmt(pair: Pair<Rule>) -> Result<AstNode, Error> {
         Rule::activate => parse_activate(pair),
         Rule::deactivate => parse_deactivate(pair),
         Rule::message_note => parse_message_note(pair)?,
+        Rule::separator => parse_separator(pair),
         unknown_expr => panic!("Unexpected expression: {:?}", unknown_expr),
     })
 }
@@ -342,4 +347,10 @@ fn parse_message_note(pair: Pair<Rule>) -> Result<AstNode, Error> {
         .replace("\\n", "\n");
 
     Ok(AstNode::Note { label, direction })
+}
+
+fn parse_separator(pair: Pair<Rule>) -> AstNode {
+    let mut pair = pair.into_inner();
+    let label = pair.next().unwrap().as_str().to_string();
+    AstNode::Separator(label)
 }

@@ -10,6 +10,7 @@ stmt = {
     | activate
     | deactivate
     | message_note
+    | separator
 }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -41,5 +42,8 @@ note_orientation = { note_left | note_right | note_over }
 note_left = { "left" }
 note_right = { "right" }
 note_over = { "over" ~ (ident ~ ",")* ~ ident }
+
+separator = { "==" ~ separator_label ~ "==" }
+separator_label = { ( !"==" ~ ANY )* }
 
 WHITESPACE = _{ " " | "\t" }
