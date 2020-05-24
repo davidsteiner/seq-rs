@@ -21,7 +21,7 @@ pub enum NoteOrientation {
 
 impl Note {
     fn width(&self) -> u32 {
-        let longest = &self.label.split("\\n").max_by_key(|t| t.len()).unwrap();
+        let longest = &self.label.split('\n').max_by_key(|t| t.len()).unwrap();
         string_width(longest, self.config.font_size)
     }
 }
@@ -83,7 +83,7 @@ impl TimelineEvent for Note {
 
     fn height(&self) -> u32 {
         let font_size = self.config.font_size;
-        (font_size as usize * self.label.split("\\n").count()) as u32 * 11 / 10
+        (font_size as usize * self.label.split('\n').count()) as u32 * 11 / 10
             + font_size as u32 / 3
     }
 

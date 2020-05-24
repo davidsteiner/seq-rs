@@ -110,7 +110,7 @@ impl Renderer for SVGRenderer {
     }
 
     fn render_text(&mut self, text: &str, x: u32, y: u32, font_size: u32, text_anchor: &str) {
-        let lines = text.split("\\n");
+        let lines = text.split('\n');
         let mut text = Text::new()
             .set("x", x)
             .set("y", y)

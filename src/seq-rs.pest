@@ -33,8 +33,10 @@ group_end = { "end" }
 activate = { "activate" ~ ident }
 deactivate = { "deactivate" ~ ident }
 
-message_note = { "note" ~ note_orientation ~ note_label }
+message_note = { "note" ~ note_orientation ~ ( note_label | note_multiline_label ) }
 note_label = { ":" ~ label }
+note_multiline_label = { "\n" ~ multiline_label ~ "\n" ~ "end note" }
+multiline_label = { ( !("\n" ~ "end note") ~ ANY )* }
 note_orientation = { note_left | note_right | note_over }
 note_left = { "left" }
 note_right = { "right" }

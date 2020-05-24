@@ -332,10 +332,14 @@ fn parse_message_note(pair: Pair<Rule>) -> Result<AstNode, Error> {
         _ => return Err(Error::new("Unexpected note orientation".to_string())),
     };
 
-    let label = pairs.next().unwrap().into_inner().next().unwrap().as_str();
+    let label = pairs
+        .next()
+        .unwrap()
+        .into_inner()
+        .next()
+        .unwrap()
+        .as_str()
+        .replace("\\n", "\n");
 
-    Ok(AstNode::Note {
-        label: label.to_string(),
-        direction,
-    })
+    Ok(AstNode::Note { label, direction })
 }
