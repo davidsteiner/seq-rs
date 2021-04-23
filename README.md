@@ -4,5 +4,5 @@ seq-rs is a library to create SVG diagrams from a DSL, which is currently compat
 It compiles to web-assembly, making it suitable for embedding in web front-ends.
 
 Example:
-https://seq-rs.gcdisable.com/<br />
+https://planty.gcdisable.com/<br />
 (not mobile friendly)
